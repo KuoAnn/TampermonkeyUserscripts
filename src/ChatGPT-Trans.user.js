@@ -32,7 +32,7 @@
             .replace(/\n{3,}/sg, '\n\n')
             .replace(/^\s+|\s+$/sg, '')
 
-        prompt = `請將以下內容翻譯成流暢的繁體中文，並對罕用的英文單字進行個別解釋：\n\n${prompt}`;
+        prompt = `請將以下內容翻譯成臺灣常用的正體中文：\n\n${prompt}`;
 
         var url = `https://chat.openai.com/chat#autoSubmit=1&prompt=${encodeURIComponent(prompt)}`;
 
