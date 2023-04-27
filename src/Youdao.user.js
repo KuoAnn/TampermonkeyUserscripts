@@ -2,7 +2,7 @@
 // @name         Youdao
 // @namespace    http://youdao.com/
 // @source       https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/Youdao.user.js
-// @version      1.0.0
+// @version      1.0.1
 // @description  try to take over the world!
 // @author       KuoAnn
 // @match        https://fanyi.youdao.com/*

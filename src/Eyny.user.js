@@ -2,7 +2,7 @@
 // @name         Eyny
 // @namespace    http://*.eyny.com/*
 // @source       https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/Eyny.user.js
-// @version      1.0.0
+// @version      1.0.1
 // @description  try to take over the world!
 // @author       KuoAnn
 // @match        http://*.eyny.com/*

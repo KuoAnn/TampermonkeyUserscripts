@@ -2,7 +2,7 @@
 // @name         Slack pulling mode
 // @namespace    http://tampermonkey.net/
 // @source       https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/Slack-Polling.user.js
-// @version      1.0.0
+// @version      1.0.1
 // @description  try to take over the world!
 // @author       KuoAnn
 // @match        https://app.slack.com/client/*

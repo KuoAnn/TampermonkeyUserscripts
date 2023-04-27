@@ -2,7 +2,7 @@
 // @name         Gengo-Trans
 // @source       https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/Gengo-Trans.user.js
 // @namespace    https://gengo.com/
-// @version      1.4.0
+// @version      1.4.1
 // @description  Gengo Translate Extensions
 // @author       KuoAnn
 // @match        https://gengo.com/t/workbench/*

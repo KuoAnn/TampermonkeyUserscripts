@@ -2,7 +2,7 @@
 // @name         Cathay Auto Register
 // @namespace    https://www.cathaybk.com.tw/promotion/CreditCard/Event
 // @source       https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/Cathay-Register.user.js
-// @version      1.0.0
+// @version      1.0.1
 // @description  try to take over the world!
 // @author       KuoAnn
 // @match        https://www.cathaybk.com.tw/promotion*/CreditCard/Event
