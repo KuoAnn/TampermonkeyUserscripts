@@ -2,7 +2,7 @@
 // @name         Gengo-Trans
 // @source       https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/Gengo-Trans.user.js
 // @namespace    https://gengo.com/
-// @version      1.4.4
+// @version      1.4.5
 // @description  Gengo Translate Extensions
 // @author       KuoAnn
 // @match        https://gengo.com/t/workbench/*
@@ -15,7 +15,7 @@
 const converter = OpenCC.Converter({ from: "cn", to: "tw" });
 const css = `
     mark { background-color:orange; }
-    .sourceToolbar {position:absolute;top:12px;left:36%;}
+    .sourceToolbar {position:absolute;top:12px;left:12%;}
     .sourceToolbar a {float:right;padding:0 0 0 6px;}
     .btn-all {float:right;}
 `;
@@ -163,6 +163,9 @@ let OPENAI_API_KEY = localStorage.getItem("OPENAI_API_KEY");
         if ($navbarJob.length > 0) {
             $.each($navbarJob.find(".segment"), function (i, d) {
                 let $d = $(d);
+                $(".icon-info").parents("li").remove();
+                $(".icon-flag").parents("li").remove();
+
                 // Source
                 console.log("Append Source[" + i + "]");
                 $d.find(".source-wrap pre").before(
