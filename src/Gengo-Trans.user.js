@@ -267,9 +267,10 @@ function send2Gpt(sQuestion, $destination) {
         OPENAI_API_KEY = prompt("Enter Your OPENAI_API_KEY", "");
         if (OPENAI_API_KEY === null) {
             alert("You did not enter OPENAI_API_KEY");
+            return;
         }
     }
-    if (sQuestion == "") {
+    if (sQuestion === "") {
         alert("Type in your question!");
         return;
     }
