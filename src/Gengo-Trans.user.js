@@ -2,7 +2,7 @@
 // @name         Gengo-Trans
 // @source       https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/Gengo-Trans.user.js
 // @namespace    https://gengo.com/
-// @version      1.4.1
+// @version      1.4.2
 // @description  Gengo Translate Extensions
 // @author       KuoAnn
 // @match        https://gengo.com/t/workbench/*
@@ -265,8 +265,8 @@ function panguText($area) {
 function send2Gpt(sQuestion, $destination) {
     if (OPENAI_API_KEY == null) {
         OPENAI_API_KEY = prompt("Enter Your OPENAI_API_KEY", "");
-        if (OPENAI_API_KEY !== null) {
-            console.log("You did not enter a OPENAI_API_KEY.");
+        if (OPENAI_API_KEY === null) {
+            alert("You did not enter OPENAI_API_KEY");
         }
     }
     if (sQuestion == "") {
@@ -306,6 +306,7 @@ function send2Gpt(sQuestion, $destination) {
                 if (s == "") {
                     alert("GPT response empty");
                 } else {
+                    localStorage.setItem("OPENAI_API_KEY", OPENAI_API_KEY);
                     $destination.val(s.content);
                     setTimeout(function () {
                         $("#btnSave").click();
