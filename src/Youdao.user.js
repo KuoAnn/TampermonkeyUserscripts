@@ -13,7 +13,7 @@
 // ==/UserScript==
 
 const converter = OpenCC.Converter({ from: "cn", to: "tw" });
-(function () {
+(() => {
     "use strict";
     const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
@@ -30,34 +30,35 @@ const converter = OpenCC.Converter({ from: "cn", to: "tw" });
         addTransBtn();
 
         // clear ad
-        const chkImgClose = setInterval(function () {
+        const chkImgClose = setInterval(() => {
             let ele = document.querySelectorAll("img.close");
             if (ele.length > 0) {
                 console.log("Dectected img.close");
                 clearInterval(chkImgClose);
                 ele.forEach((x) => {
-                    setTimeout(function(){
-                        x.click();
-                    },500);
+                    x.click();
                 });
             }
         }, 100);
-        const chkNeverShow = setInterval(function () {
+        const chkNeverShow = setInterval(() => {
             let ele = document.querySelectorAll(".never-show span");
             if (ele.length > 0) {
                 console.log("Dectected .never-show span");
                 clearInterval(chkNeverShow);
                 ele.forEach((x) => {
-                    setTimeout(function(){
-                        x.click();
-                    },500);
+                    x.click();
                 });
             }
         }, 100);
+
+        setTimeout(() => {
+            clearInterval(chkImgClose);
+            clearInterval(chkNeverShow);
+        }, 10000);
     };
     execute();
 
-    function addTransBtn() {
+    const addTransBtn = () => {
         const toolBtn = document.querySelector(".tool-button");
         const newButton = document.createElement("button");
         newButton.textContent = "簡轉繁";
@@ -65,7 +66,7 @@ const converter = OpenCC.Converter({ from: "cn", to: "tw" });
             "style",
             "margin-left: 12px;width: 72px;line-height: 36px;background: #248ce0;border-radius: 6px;font-size: 14px;color: #fff;"
         );
-        newButton.addEventListener("click", function () {
+        newButton.addEventListener("click", () => {
             var resultOutput = document.getElementById("js_fanyi_output_resultOutput");
             var pElements = resultOutput.getElementsByTagName("p");
             for (var i = 0; i < pElements.length; i++) {
@@ -73,9 +74,9 @@ const converter = OpenCC.Converter({ from: "cn", to: "tw" });
             }
         });
         toolBtn.insertAdjacentElement("afterend", newButton);
-    }
+    };
 
-    function addCopyBtn() {
+    const addCopyBtn = () => {
         const toolBtn = document.querySelector(".tool-button");
         const newButton = document.createElement("button");
         newButton.textContent = "Copy";
@@ -85,17 +86,12 @@ const converter = OpenCC.Converter({ from: "cn", to: "tw" });
         );
         newButton.addEventListener("click", () => {
             const resultOutput = document.getElementById("js_fanyi_output_resultOutput");
-            const textarea = document.createElement("textarea");
-            textarea.value = resultOutput.innerText.replace(/\n\n\n/g, "\n");
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand("copy");
-            document.body.removeChild(textarea);
+            navigator.clipboard.writeText(resultOutput.innerText.replace(/\n\n\n/g, "\n"));
         });
         toolBtn.insertAdjacentElement("afterend", newButton);
-    }
+    };
 
-    function cn2Tw(cnText) {
+    const cn2Tw = (cnText) => {
         let t = converter(cnText);
         t = pangu.spacing(t);
         t = t.replace(/“/g, "「");
@@ -106,5 +102,5 @@ const converter = OpenCC.Converter({ from: "cn", to: "tw" });
         t = t.replace(/—/g, "──");
         t = t.replace(/你/g, "您");
         return t;
-    }
+    };
 })();
