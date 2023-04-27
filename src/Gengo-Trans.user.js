@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gengo-Trans
 // @namespace    https://gengo.com/
-// @version      1.3.1
+// @version      1.4.0
 // @description  try to take over the world!
 // @author       You
 // @match        https://gengo.com/t/workbench/*
