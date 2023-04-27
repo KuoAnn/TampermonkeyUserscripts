@@ -2,11 +2,11 @@
 // @name         Gengo-Trans
 // @source       https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/Gengo-Trans.user.js
 // @namespace    https://gengo.com/
-// @version      1.4.2
+// @version      1.4.4
 // @description  Gengo Translate Extensions
 // @author       KuoAnn
 // @match        https://gengo.com/t/workbench/*
-// @grant        none
+// @grant        GM_openInTab
 // @require      https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/cn2t.min.js
 // @require      https://cdn.jsdelivr.net/npm/pangu@4.0.7/dist/browser/pangu.min.js
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=www.gengo.com
@@ -15,7 +15,7 @@
 const converter = OpenCC.Converter({ from: "cn", to: "tw" });
 const css = `
     mark { background-color:orange; }
-    .sourceToolbar {position:absolute;top:12px;left:40%;}
+    .sourceToolbar {position:absolute;top:12px;left:36%;}
     .sourceToolbar a {float:right;padding:0 0 0 6px;}
     .btn-all {float:right;}
 `;
@@ -29,6 +29,8 @@ const svg_cn2tw =
     '<svg width="18" height="18" viewBox="0 0 64 64"><path fill="currentColor" d="M32 2C15.432 2 2 15.432 2 32s13.432 30 30 30s30-13.432 30-30S48.568 2 32 2M19.217 24.134a4.916 4.916 0 1 1 0-9.834c2.716 0 4.916 2.201 4.916 4.917s-2.2 4.917-4.916 4.917m1.169.529l-1.169 4.387l-1.171-4.388c.378.081.769.126 1.171.126c.401 0 .792-.045 1.169-.125m-5.297-9.183a5.565 5.565 0 0 0-1.175 2.024L10.701 14.3l4.388 1.18m-.789-4.779l3.205 3.213a5.542 5.542 0 0 0-2.024 1.175L14.3 10.701m-.531 7.345a5.56 5.56 0 0 0 0 2.34l-4.386-1.169l4.386-1.171m.145 2.882c.245.76.651 1.445 1.175 2.023l-4.388 1.183l3.213-3.206m1.566 2.415a5.58 5.58 0 0 0 2.025 1.176L14.3 27.732l1.18-4.389m2.566-9.574l1.171-4.385l1.169 4.385a5.56 5.56 0 0 0-2.34 0m4.905 1.32a5.569 5.569 0 0 0-2.023-1.175l3.205-3.213l-1.182 4.388m4.781-.789l-3.214 3.206a5.557 5.557 0 0 0-1.176-2.025l4.39-1.181m-4.781 9.043l1.182 4.39l-3.207-3.214a5.585 5.585 0 0 0 2.025-1.176m.391-.392a5.567 5.567 0 0 0 1.177-2.025l3.214 3.208l-4.391-1.183m1.321-2.565c.08-.377.125-.768.125-1.169c0-.402-.045-.793-.126-1.171l4.388 1.171l-4.387 1.169M32 60C16.561 60 4 47.439 4 32h28V4c15.439 0 28 12.561 28 28S47.439 60 32 60"/></svg>';
 const svg_pangu =
     '<svg width="18" height="18" viewBox="0 0 256 256"><path fill="currentColor" d="M112 48v160a8 8 0 0 1-16 0v-72H43.31l18.35 18.34a8 8 0 0 1-11.32 11.32l-32-32a8 8 0 0 1 0-11.32l32-32a8 8 0 0 1 11.32 11.32L43.31 120H96V48a8 8 0 0 1 16 0Zm125.66 74.34l-32-32a8 8 0 0 0-11.32 11.32L212.69 120H160V48a8 8 0 0 0-16 0v160a8 8 0 0 0 16 0v-72h52.69l-18.35 18.34a8 8 0 0 0 11.32 11.32l32-32a8 8 0 0 0 0-11.32Z"/></svg>';
+const img_promtGpt =
+    '<img style="display:block;height:18px;" src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/240px-ChatGPT_logo.svg.png">';
 
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
@@ -51,6 +53,21 @@ let OPENAI_API_KEY = localStorage.getItem("OPENAI_API_KEY");
             console.log(".navbar-btn detect=" + $selector.length);
         }
     }, 100);
+
+    $(document).keydown(function (event) {
+        // 檢查是否按下 Alt + T
+        if (event.altKey && event.keyCode == 84) {
+            let text = "";
+            // 以選取的文字為主
+            if (window.getSelection) {
+                text = window.getSelection().toString();
+            } else if (document.selection && document.selection.type != "Control") {
+                text = document.selection.createRange().text;
+            }
+            console.log("AltT:" + text);
+            promt2Gpt(text);
+        }
+    });
 
     const execute = async () => {
         await delay(100);
@@ -146,24 +163,23 @@ let OPENAI_API_KEY = localStorage.getItem("OPENAI_API_KEY");
         if ($navbarJob.length > 0) {
             $.each($navbarJob.find(".segment"), function (i, d) {
                 let $d = $(d);
-                console.log("Append Source[" + i + "]");
                 // Source
+                console.log("Append Source[" + i + "]");
                 $d.find(".source-wrap pre").before(
                     "<div class='sourceToolbar'>" +
                         '<a class="btn btnSrcCopy btn-link" href="javascript:void(0)">' +
                         svg_clone +
+                        "</a>" +
+                        '<a class="btn btnPromtGpt btn-link" href="javascript:void(0)">' +
+                        img_promtGpt +
                         "</a>" +
                         '<a class="btn btnHighlight btn-link" href="javascript:void(0)">' +
                         svg_highlight +
                         "</a>" +
                         "</div>"
                 );
-            });
-
-            $.each($navbarJob.find(".segment"), function (i, d) {
-                let $d = $(d);
-                console.log("Append Target[" + i + "]");
                 // Target
+                console.log("Append Target[" + i + "]");
                 $d.find(".nav-tools li:last")
                     .after('<li><a class="btn btnTgtCopy" href="javascript:void(0)">' + svg_clone + "</a></li>")
                     .after('<li><a class="btn btnTgtPangu" href="javascript:void(0)">' + svg_pangu + "</a></li>")
@@ -173,12 +189,17 @@ let OPENAI_API_KEY = localStorage.getItem("OPENAI_API_KEY");
 
             // Source
             $(".btnHighlight")
-                .on("click", function () {
+                .click(function () {
                     let $target = $(this).parents(".source-wrap").find("pre br");
                     $target.before("<mark>");
                 })
                 .click();
-            $(".btnSrcCopy").on("click", function () {
+            $(".btnPromtGpt").click(function () {
+                let $target = $(this).parents(".source-wrap").find("pre");
+                let copyText = getOriginalText($target);
+                promt2Gpt(copyText);
+            });
+            $(".btnSrcCopy").click(function () {
                 let $target = $(this).parents(".source-wrap").find("pre");
                 let copyText = getOriginalText($target);
                 // $target.select();
@@ -259,6 +280,20 @@ function panguText($area) {
         let t = pangu.spacing($area.val());
         $area.val(t);
         $("#btnSave").click();
+    }
+}
+
+function promt2Gpt(text) {
+    if (text) {
+        let prompt = text
+            .replace(/\r/g, "")
+            .replace(/\s+$/g, "")
+            .replace(/\n{3,}/gs, "\n\n")
+            .replace(/^\s+|\s+$/gs, "");
+
+        prompt = `請將以下內容翻譯成流暢的繁體中文，並對罕用的英文單字進行個別解釋：\n\n${prompt}`;
+        var url = `https://chat.openai.com/chat#autoSubmit=1&prompt=${encodeURIComponent(prompt)}`;
+        GM_openInTab(url, false);
     }
 }
 
