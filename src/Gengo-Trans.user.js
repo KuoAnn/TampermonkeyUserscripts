@@ -6,6 +6,7 @@
 // @author       You
 // @match        https://gengo.com/t/workbench/*
 // @grant        none
+// @source       https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/Gengo-Trans.user.js
 // @require      https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/cn2t.min.js
 // @require      https://cdn.jsdelivr.net/npm/pangu@4.0.7/dist/browser/pangu.min.js
 // ==/UserScript==
