@@ -7,6 +7,7 @@
 // @author       KuoAnn
 // @match        https://www.cathaybk.com.tw/promotion*/CreditCard/Event
 // @grant        none
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=www.cathaybk.com.tw
 // ==/UserScript==
 
 (function () {

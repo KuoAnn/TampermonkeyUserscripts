@@ -7,6 +7,7 @@
 // @author       KuoAnn
 // @match        https://cathay.elearn.com.tw/cltcms/play-index-home.do
 // @grant        none
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=www.cathaybk.com.tw
 // ==/UserScript==
 
 (function () {

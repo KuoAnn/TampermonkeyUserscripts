@@ -8,6 +8,7 @@
 // @match        http://*.eyny.com/*
 // @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
 // @grant        none
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=www.eyny.com
 // ==/UserScript==
 
 (function() {

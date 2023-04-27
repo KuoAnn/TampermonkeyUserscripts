@@ -9,6 +9,7 @@
 // @grant        none
 // @require      https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/cn2t.min.js
 // @require      https://cdn.jsdelivr.net/npm/pangu@4.0.7/dist/browser/pangu.min.js
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=www.gengo.com
 // ==/UserScript==
 
 const converter = OpenCC.Converter({ from: "cn", to: "tw" });
