@@ -348,7 +348,7 @@ function send2Gpt(sQuestion, $destination) {
                     localStorage.setItem("OPENAI_API_KEY", OPENAI_API_KEY);
                     $destination.val(s.content);
                     setTimeout(function () {
-                        $("#btnSave").click();
+                        $("#btnSaveAll").click();
                     }, 500);
                 }
             } else {
