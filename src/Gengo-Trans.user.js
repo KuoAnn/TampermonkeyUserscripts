@@ -2,7 +2,7 @@
 // @name         Gengo-Trans
 // @source       https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/Gengo-Trans.user.js
 // @namespace    https://gengo.com/
-// @version      1.4.5
+// @version      1.4.7
 // @description  Gengo Translate Extensions
 // @author       KuoAnn
 // @match        https://gengo.com/t/workbench/*
@@ -294,7 +294,7 @@ function promt2Gpt(text) {
             .replace(/\n{3,}/gs, "\n\n")
             .replace(/^\s+|\s+$/gs, "");
 
-        prompt = `請將以下內容翻譯成臺灣常用的正體中文：\n\n${prompt}`;
+        prompt = `將以下內容翻譯成臺灣常用的正體中文：\n\n${prompt}`;
         var url = `https://chat.openai.com/chat#autoSubmit=1&prompt=${encodeURIComponent(prompt)}`;
         GM_openInTab(url, false);
     }
@@ -339,6 +339,10 @@ function send2Gpt(sQuestion, $destination) {
             if (oJson.error && oJson.error.message) {
                 alert("GPT Error: " + oJson.error.message);
                 console.eror("GPT Error: " + oJson.error.message);
+                if (oJson.error.code == "invalid_api_key") {
+                    OPENAI_API_KEY = null;
+                    localStorage.removeItem("OPENAI_API_KEY");
+                }
             } else if (oJson.choices && oJson.choices[0].message) {
                 console.log(oJson);
                 var s = oJson.choices[0].message;
