@@ -11,19 +11,23 @@
 // ==/UserScript==
 
 (function () {
-    'use strict';
+    "use strict";
     var autoReload = false;
     var reloadWaitTime = 3;
 
     var start = function () {
         var attack = function (cid) {
             if (!!cid) {
-                alert('Attack ' + cid);
+                alert("Attack " + cid);
                 var form = $("#form-hidden");
                 var token = form.find('input[name="__RequestVerificationToken"]').val();
 
                 $.ajax({
-                    url: form[0].action, type: form[0].method, cache: 0, data: "CampaignId=" + cid + "&__RequestVerificationToken=" + token, dataType: "json",
+                    url: form[0].action,
+                    type: form[0].method,
+                    cache: 0,
+                    data: "CampaignId=" + cid + "&__RequestVerificationToken=" + token,
+                    dataType: "json",
                     success: function (rs) {
                         if (rs) {
                             alert(rs.signResultText);
@@ -40,7 +44,7 @@
                                     alert("<h1 style='color:green'>SUCCESS! SN=" + rs.signUpNumber + "</h1>");
                                     break;
                                 case 9001:
-                                    alert('Full');
+                                    alert("Full");
                                     break;
                                 case 9998:
                                     alert("Rush Hour");
@@ -52,13 +56,21 @@
                             }
                         }
                     },
-                    error: function (xhr) { if (xhr.status === 401) { alert("error: xhr=401"); } else if (IsHotTime) { alert("error: Rush Hour"); } else { alert("error: Busy") } },
+                    error: function (xhr) {
+                        if (xhr.status === 401) {
+                            alert("error: xhr=401");
+                        } else if (IsHotTime) {
+                            alert("error: Rush Hour");
+                        } else {
+                            alert("error: Busy");
+                        }
+                    },
                 });
             }
-        }
+        };
 
-        $('.btn.btn-sign').each(function (i, d) {
-            var cid = $(d).attr('data-campaign-id');
+        $(".btn.btn-sign").each(function (i, d) {
+            var cid = $(d).attr("data-campaign-id");
 
             if (!!cid) {
                 attack(cid);
@@ -66,10 +78,12 @@
                 alert("Found " + cid);
             }
         });
-    }
+    };
 
-    alert = function (str) {
-        function checkTime(i) { return (i < 10) ? "0" + i : i; }
+    alert = function (str, alertType) {
+        function checkTime(i) {
+            return i < 10 ? "0" + i : i;
+        }
         function getNowTime() {
             var today = new Date(),
                 h = checkTime(today.getHours()),
@@ -81,19 +95,24 @@
         var oTest = document.getElementsByClassName("tabbox")[0];
         var newNode = document.createElement("div");
         newNode.style.backgroundColor = "rgba(255, 255, 255, 0.8)";
+        if (alertType == "red") {
+            newNode.style.color = "red";
+            newNode.style.fontWeight = "bold";
+            newNode.style.backgroundColor = "yellow";
+        }
 
-        newNode.innerHTML = getNowTime() + ' >>> ' + str;
+        newNode.innerHTML = getNowTime() + " >>> " + str;
 
         oTest.insertBefore(newNode, oTest.childNodes[0]);
     };
 
     var waitHtmlBuzzer = setInterval(function () {
         alert("Loading...");
-        if (document.getElementsByClassName('btn').length > 0) {
+        if (document.getElementsByClassName("btn").length > 0) {
             clearInterval(waitHtmlBuzzer);
 
-            if (document.getElementsByClassName('btn-sign').length == 0) {
-                alert('尚無可登錄的活動');
+            if (document.getElementsByClassName("btn-sign").length == 0) {
+                alert("查無可登錄的活動", "red");
 
                 if (autoReload) {
                     var reloadTimer = setInterval(function () {
@@ -102,15 +121,13 @@
                             alert("Reloading...");
                             location.reload();
                             return;
-                        }
-                        else {
+                        } else {
                             alert("Wait to Reload..." + reloadWaitTime--);
                         }
                     }, 1000);
                     return;
                 }
-            }
-            else {
+            } else {
                 start();
             }
         }
