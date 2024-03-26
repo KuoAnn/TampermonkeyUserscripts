@@ -78,8 +78,10 @@
             return h + ":" + m + ":" + s;
         }
 
-        var oTest = document.getElementsByTagName('body')[0];
+        var oTest = document.getElementsByClassName("tabbox")[0];
         var newNode = document.createElement("div");
+        newNode.style.backgroundColor = "rgba(255, 255, 255, 0.8)";
+
         newNode.innerHTML = getNowTime() + ' >>> ' + str;
 
         oTest.insertBefore(newNode, oTest.childNodes[0]);
@@ -91,7 +93,7 @@
             clearInterval(waitHtmlBuzzer);
 
             if (document.getElementsByClassName('btn-sign').length == 0) {
-                alert('CampaignId not Found');
+                alert('尚無可登錄的活動');
 
                 if (autoReload) {
                     var reloadTimer = setInterval(function () {
