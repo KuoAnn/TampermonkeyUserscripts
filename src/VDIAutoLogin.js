@@ -14,15 +14,18 @@ const pwd = "bbb";
 const pin = "0000";
 const secret = "1234567890123456";
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+
 (function () {
     let params = new URLSearchParams(window.location.search);
     let goto = params.get("goto");
     console.log(`goto=${goto}`);
+
     autoLogin(goto);
+
     async function autoLogin(goto) {
         try {
             let count = 0;
-            while (count++ <= 10) {
+            while (count++ <= 20) {
                 const eleSecUserName = document.getElementById("securUsername");
                 if (eleSecUserName) {
                     console.log("input #securUsername=" + usr);
@@ -36,21 +39,24 @@ const delay = (ms) => new Promise((res) => setTimeout(res, ms));
                         inputNgText(elePassCode, otp);
                     }
                     console.log("login layer1");
+                    await delay(200);
                     document.getElementById("securLoginButton").click();
-                    break;
                 }
+
                 const elePassword = document.getElementById("password");
                 if (elePassword) {
                     console.log("input #password=" + pwd);
                     inputNgText(elePassword, pwd);
                     console.log("login layer2");
+                    await delay(200);
                     document.getElementById("loginButton").click();
-                    break;
                 }
+
                 if (goto) {
                     console.log("try jump");
                     const ele = document.querySelector(`div[title=${goto}]`);
                     if (ele) {
+                        await delay(200);
                         ele.click();
                         break;
                     }
@@ -62,12 +68,14 @@ const delay = (ms) => new Promise((res) => setTimeout(res, ms));
         }
     }
 })();
+
 const inputNgText = function (ele, text) {
     ele.focus();
     ele.value = text;
     ele.blur();
     ele.dispatchEvent(new Event("input", { bubbles: true }));
 };
+
 const md5 = new (function () {
     var l = "length",
         h = ["0123456789abcdef", 0x0f, 0x80, 0xffff, 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476],
