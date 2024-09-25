@@ -10,9 +10,10 @@
 // ==/UserScript==
 
 (function () {
-    "use strict";
-    let checkCode = "40637634";
+    ("use strict");
+    let checkCode = "40637634"; // 信用卡卡號前八碼/手機號碼
     let isClickBuyTicket = false;
+    let buyCount = 4;
 
     const observer = new MutationObserver((mutationsList) => {
         mutationsList.forEach((mutation) => {
@@ -27,21 +28,12 @@
                 const verifyCodeInput = document.getElementById("TicketForm_verifyCode");
                 if (verifyCodeInput) {
                     verifyCodeInput.focus();
-                    // 於輸入框按下 enter 點選 submit
-                    verifyCodeInput.addEventListener("keydown", function (e) {
-                        if (e.key === "Enter") {
-                            const submit = document.querySelector("button[type=submit],#submitButton");
-                            if (submit) {
-                                submit.click();
-                            }
-                        }
-                    });
                 }
 
                 // 購票 4 張
                 const ticketPrice = document.querySelector("#TicketForm_ticketPrice_01,#TicketForm_ticketPrice_02");
                 if (ticketPrice) {
-                    ticketPrice.value = 4;
+                    ticketPrice.value = buyCount;
                 }
 
                 // 點選關閉提醒
@@ -63,6 +55,11 @@
                     checkCodeInput.value = checkCode;
                 }
 
+                const atmRadio = document.getElementById("CheckoutForm_paymentId_54");
+                if (atmRadio) {
+                    atmRadio.click();
+                }
+
                 // submit button 變大
                 const submit = document.querySelector("button[type=submit],#submitButton");
                 if (submit) {
@@ -78,7 +75,12 @@
 
     // alt+方向鍵下：選擇下一個售票日期
     document.addEventListener("keydown", function (e) {
-        if (e.altKey && e.key === "ArrowDown") {
+        if (e.key === "Enter") {
+            const submit = document.querySelector("button[type=submit],#submitButton");
+            if (submit) {
+                submit.click();
+            }
+        } else if (e.altKey && e.key === "ArrowDown") {
             let select = document.querySelector("#gameId");
             if (select) {
                 let selectedIndex = select.selectedIndex;
