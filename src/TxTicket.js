@@ -12,18 +12,68 @@
 (function () {
     ("use strict");
     // 個人參數
-    let checkCode = "40637634"; // 信用卡卡號前八碼/手機號碼
-    let payType = "C"; //A=ATM, C=信用卡
+    let url = "*"; // 指定啟用網址：*=永久啟用, ""=停用
+    let buyDate = "2024/11/22,2024/11/23"; // 購票日期：依順序以,隔開，*=不限 Ex. "2024/11/22,2024/11/23," // 先搶 11/22, 再搶 11/23, 都沒有則任一日期
     let buyCount = 4;
+    let payType = "C"; // 付款方式：A=ATM, C=信用卡
 
     // 系統參數
+    let checkCode = "40637634"; // 國泰世華信用卡驗證
     let isClickBuyTicket = false;
     let isClickPayType = false;
+    let isSubmit = false;
+
+    // 取得當前網址
+    const triggerUrl = window.location.href;
+    if (url == "*") {
+    } else if (triggerUrl.includes("tixcraft.com/activity/game/")) {
+        url = "game";
+    } else if (triggerUrl.includes("tixcraft.com/activity/perform/")) {
+        url = "perform";
+    } else if (triggerUrl.includes("tixcraft.com/activity/other/")) {
+        url = "other";
+    } else {
+        return;
+    }
+
+    function autoSubmit() {
+        const submit = document.querySelector("button[type=submit],#submitButton");
+        if (submit && !isSubmit) {
+            isSubmit = true;
+            submit.click();
+        }
+    }
 
     const observer = new MutationObserver((mutationsList) => {
         mutationsList.forEach((mutation) => {
             if (mutation.type === "childList") {
                 // observer.disconnect(); // 偵測到後停止監聽
+
+                const gameList = document.querySelector("#gameList table tbody");
+                if (gameList) {
+                    /*
+                    <table class="table table-bordered"><thead>
+<tr><th>演出時間</th><th>場次名稱</th><th>場地</th><th>購買狀態</th></tr>
+</thead>
+<tbody>
+<tr class="gridc fcTxt" data-key="17676"><td>2024/11/22 (五)  20:00</td><td>2024 YUGYEOM TOUR [TRUSTY] IN TAIPEI</td><td>Zepp New Taipei</td><td><button type="button" class="btn btn-primary text-bold m-0" data-href="https://tixcraft.com/ticket/area/24_yugyeom/17676">立即訂購</button></td></tr>
+</tbody></table>
+                    */
+                    // const gameRows = gameList.querySelectorAll("tr");
+
+                    // gameRows.forEach((row) => {
+                    //     const gameDate = row.querySelector("td").textContent;
+                    //     console.log(gameDate);
+                    //     if (gameDate.includes(buyDate)) {
+                    //         const gameButton = row.querySelector("button");
+                    //         if (gameButton && !isSubmit) {
+                    //             isSubmit = true;
+                    //             console.log("click");
+                    //             // gameButton.click();
+                    //         }
+                    //     }
+                    // });
+                }
 
                 // 勾選同意條款
                 const ticketAgree = document.getElementById("TicketForm_agree");
@@ -31,10 +81,14 @@
                     ticketAgree.checked = true;
                 }
 
-                // 輸入驗證碼：信用卡卡號前八碼/手機號碼...
-                const checkCodeInput = document.querySelector(".greyInput[name=checkCode]");
-                if (checkCodeInput && checkCode.length > 0) {
-                    checkCodeInput.value = checkCode;
+                // 輸入驗證碼：國泰信用卡卡號
+                const promoTitle = document.querySelector(".promo-title");
+                const promoDesc = document.querySelector(".promo-desc");
+                if (promoTitle && promoTitle.textContent.includes("國泰世華") && promoDesc && promoDesc.textContent.includes("卡號前8碼")) {
+                    const checkCodeInput = document.querySelector(".greyInput[name=checkCode]");
+                    if (checkCodeInput && checkCode.length > 0) {
+                        checkCodeInput.value = checkCode;
+                    }
                 }
 
                 // 輸入圖形驗證碼
@@ -94,10 +148,7 @@
     // alt+方向鍵下：選擇下一個售票日期
     document.addEventListener("keydown", function (e) {
         if (e.key === "Enter") {
-            const submit = document.querySelector("button[type=submit],#submitButton");
-            if (submit) {
-                submit.click();
-            }
+            autoSubmit();
         } else if (e.altKey && e.key === "ArrowDown") {
             let select = document.querySelector("#gameId");
             if (select) {
