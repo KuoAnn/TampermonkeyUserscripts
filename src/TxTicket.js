@@ -6,6 +6,7 @@
 // @author       You
 // @match        https://tixcraft.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=tixcraft.com
+// @source       https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/TxTicket.js
 // @grant        none
 // ==/UserScript==
 // 個人參數

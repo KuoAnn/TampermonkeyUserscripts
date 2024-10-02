@@ -25,6 +25,7 @@
 | <a href="https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/Gengo-Trans.user.js"><img src="https://user-images.githubusercontent.com/88981/169986095-a54f32bd-55a6-4de8-bad6-aa3b1874ce07.png" width="32"/></a> | Gengo-Trans | Gengo 翻譯用小工具 |
 |<a href="https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/Slack-Polling.user.js"><img src="https://user-images.githubusercontent.com/88981/169986095-a54f32bd-55a6-4de8-bad6-aa3b1874ce07.png" width="32"/></a>|Slack-Polling|Slack 自動重整|
 |<a href="https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/Youdao.user.js"><img src="https://user-images.githubusercontent.com/88981/169986095-a54f32bd-55a6-4de8-bad6-aa3b1874ce07.png" width="32"/></a>|Youdao|有道翻譯簡轉繁|
+|<a href="https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/TxTicket.js"><img src="https://user-images.githubusercontent.com/88981/169986095-a54f32bd-55a6-4de8-bad6-aa3b1874ce07.png" width="32"/></a>|TxTicket||
 
 ## Reference
 
