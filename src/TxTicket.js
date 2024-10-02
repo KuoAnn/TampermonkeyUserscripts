@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         TxTicket
 // @namespace    http://tampermonkey.net/
+// @source       https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/TxTicket.js
 // @version      1.0.0
 // @description  1. 自動勾選同意條款 2. 自動輸入驗證碼 3. 自動選取購票 n 張 4. 自動點選立即購票 5. 自動選擇付款方式 6. 提交按鈕變大 7. alt+方向鍵下：選擇下一個售票日期 8. Enter 鍵直接送出 9. 自動關閉提醒
 // @author       You
 // @match        https://tixcraft.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=tixcraft.com
-// @source       https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/TxTicket.js
 // @downloadURL  https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/TxTicket.js
 // @updateURL    https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/TxTicket.js
 // @grant        none

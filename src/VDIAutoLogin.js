@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VDI Auto Login
 // @namespace    http://tampermonkey.net/
-// @version      2024-06-06
+// @version      1.0.0
 // @description  try to take over the world!
 // @author       You
 // @match        https://vdizone1/portal/webclient/index.html*

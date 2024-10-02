@@ -1,7 +1,8 @@
 // ==UserScript==
 // @name         log.kuoann
 // @namespace    http://tampermonkey.net/
-// @version      2024-09-13
+// @source       https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/LogKuoann.js
+// @version      1.0.0
 // @description  try to take over the world!
 // @author       You
 // @match        https://log.kuoann.com/*

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Yahoo Stock
 // @namespace    http://tampermonkey.net/
-// @version      2024-02-05
+// @version      1.0.0
 // @description  try to take over the world!
 // @author       You
 // @match        https://tw.stock.yahoo.com/quote/*
