@@ -9,7 +9,7 @@
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=tixcraft.com
 // @downloadURL  https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/TxTicket.js
 // @updateURL    https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/TxTicket.js
-// @grant        none
+// @grant        GM_xmlhttpRequest
 // ==/UserScript==
 // 個人參數
 const buyDateIndexes = [2, 3]; // 場次優先順序：0=第一場 1=第二場...；若無則預設最後一場
@@ -18,12 +18,13 @@ const buyCount = 4; // 購買張數，若無則選擇最大值
 const payType = "A"; // 付款方式：A=ATM, C=信用卡
 
 // 系統參數(勿動)
-let autoMode = localStorage.getItem("autoMode") || 0;
-let isSetAutoMode = false;
+let isAutoMode = (localStorage.getItem("autoMode") || 0) == 1;
+let isSetConsole = false;
 let session = "";
 let isSelectArea = false;
 let isSelect2Button = false;
 let isClickBuyTicket = false;
+let isOcr = false;
 let isClickPayType = false;
 let isSubmit = false;
 
@@ -43,14 +44,6 @@ if (triggerUrl.includes("activity/detail/")) {
     session = "c";
 }
 
-// get query string
-const q = window.location.search;
-const urlParams = new URLSearchParams(q);
-if (urlParams.get("a") == 1) {
-    localStorage.setItem("autoMode", 1);
-    autoMode = 1;
-}
-
 (function () {
     "use strict";
     const observer = new MutationObserver((mutationsList) => {
@@ -58,7 +51,7 @@ if (urlParams.get("a") == 1) {
             if (mutation.type === "childList") {
                 observer.disconnect();
                 // 自動模式提示
-                autoModeTip();
+                SetConsole();
 
                 // 自動關閉提醒
                 const closeAlert = document.querySelector("button.close-alert");
@@ -78,7 +71,7 @@ if (urlParams.get("a") == 1) {
                         }
 
                         const gameList = document.querySelector("#gameList table tbody");
-                        if (gameList && autoMode == 1 && !isSubmit) {
+                        if (gameList && isAutoMode && !isSubmit) {
                             goOrder(gameList);
                         }
                         break;
@@ -98,7 +91,7 @@ if (urlParams.get("a") == 1) {
                         break;
                     case "a":
                         // 自動選位
-                        if (autoMode == 1 && !isSelectArea) {
+                        if (isAutoMode && !isSelectArea) {
                             isSelectArea = true;
                             const isOk = selectArea();
                             if (!isOk) {
@@ -146,6 +139,11 @@ if (urlParams.get("a") == 1) {
                             });
 
                             verifyCodeInput.focus();
+
+                            if (isAutoMode && !isOcr) {
+                                isOcr = true;
+                                setCaptcha();
+                            }
                         }
                         break;
                     case "c":
@@ -260,6 +258,48 @@ if (urlParams.get("a") == 1) {
             }
         }
 
+        function setCaptcha() {
+            const img = document.getElementById("TicketForm_verifyCode-image");
+            if (img) {
+                const imgSrc = img.src;
+                fetch(imgSrc)
+                    .then((response) => response.blob())
+                    .then((blob) => {
+                        // blob size
+                        console.log("blob size", blob.size);
+
+                        const formData = new FormData();
+                        const file = new File([blob], "c.png", { type: "image/png" });
+                        formData.append("image", file);
+
+                        const ocr = GM_xmlhttpRequest({
+                            method: "POST",
+                            url: "https://asia-east1-futureminer.cloudfunctions.net/ocr",
+                            data: formData,
+                            onload: function (r) {
+                                isOcr = false;
+                                if (r.status == 200) {
+                                    const captcha = r.responseText;
+                                    if (captcha.length == 4) {
+                                        const verifyCodeInput = document.getElementById("TicketForm_verifyCode");
+                                        if (verifyCodeInput) {
+                                            verifyCodeInput.value = captcha;
+                                            autoSubmit();
+                                        }
+                                    }
+                                } else {
+                                    console.error("上傳失敗", r.statusText + "|" + r.responseText);
+                                }
+                            },
+                            onerror: function (error) {
+                                console.error("Error:", error);
+                            },
+                        });
+                    })
+                    .catch((error) => console.error("Fetch error:", error));
+            }
+        }
+
         function largerSubmit() {
             const submit = document.querySelector("button[type=submit],#submitButton");
             if (submit) {
@@ -277,30 +317,32 @@ if (urlParams.get("a") == 1) {
             });
         }
 
-        function autoModeTip() {
-            if (isSetAutoMode) {
+        function SetConsole() {
+            if (isSetConsole) {
                 return;
             }
-            isSetAutoMode = true;
-            const tip = document.createElement("div");
-            tip.style.position = "fixed";
-            tip.style.top = "0";
-            tip.style.left = "0";
-            tip.style.padding = "10px";
-            tip.style.textAlign = "center";
-            tip.style.zIndex = "9999";
-            tip.style.color = "white";
-            tip.style.cursor = "pointer";
-            if (autoMode == 1) {
-                tip.style.backgroundColor = "green";
-                tip.textContent = "🤖";
+            isSetConsole = true;
+
+            const divConsole = document.createElement("div");
+            divConsole.id = "divConsole";
+            divConsole.style.position = "fixed";
+            divConsole.style.top = "0";
+            divConsole.style.left = "0";
+            divConsole.style.padding = "10px";
+            divConsole.style.textAlign = "center";
+            divConsole.style.zIndex = "9999";
+            divConsole.style.color = "white";
+            divConsole.style.cursor = "pointer";
+            if (isAutoMode) {
+                divConsole.style.backgroundColor = "green";
+                divConsole.textContent = "🤖";
             } else {
-                tip.style.backgroundColor = "red";
-                tip.textContent = "Manual";
+                divConsole.style.backgroundColor = "red";
+                divConsole.textContent = "Manual";
             }
-            document.body.appendChild(tip);
-            tip.addEventListener("click", () => {
-                localStorage.setItem("autoMode", autoMode == 1 ? 0 : 1);
+            document.body.appendChild(divConsole);
+            divConsole.addEventListener("click", () => {
+                localStorage.setItem("autoMode", isAutoMode ? 0 : 1);
                 window.location.reload();
             });
         }
