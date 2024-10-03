@@ -12,7 +12,7 @@
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
 // 個人參數
-const buyDateIndexes = [2, 3]; // 場次優先順序：0=第一場 1=第二場...；若無則預設最後一場
+const buyDateIndexes = [2, 3]; // 場次優先順序：0=第一場 1=第二場...；若空值則預設最後一場
 const buyArea = ["VIP"]; // 座位優先順序，建議嚴謹>鬆散；以空白作為 AND 邏輯：空值=不限
 const buyCount = 4; // 購買張數，若無則選擇最大值
 const payType = "A"; // 付款方式：A=ATM, C=信用卡
@@ -27,6 +27,7 @@ let isClickBuyTicket = false;
 let isOcr = false;
 let isClickPayType = false;
 let isSubmit = false;
+let isListenOrder = false;
 
 // 取得當前網址
 const triggerUrl = window.location.href;
@@ -49,7 +50,10 @@ if (triggerUrl.includes("activity/detail/")) {
     const observer = new MutationObserver((mutationsList) => {
         mutationsList.forEach((mutation) => {
             if (mutation.type === "childList") {
-                observer.disconnect();
+                if (session != "d" && session != "g") {
+                    observer.disconnect();
+                }
+
                 // 自動模式提示
                 SetConsole();
 
@@ -70,10 +74,25 @@ if (triggerUrl.includes("activity/detail/")) {
                             buyTicket.click();
                         }
 
-                        const gameList = document.querySelector("#gameList table tbody");
-                        if (gameList && isAutoMode && !isSubmit) {
-                            goOrder(gameList);
+                        if (isAutoMode) {
+                            let gameList = document.querySelector("#gameList table tbody");
+                            if (gameList && !isSubmit && !isListenOrder) {
+                                isListenOrder = true;
+                                const listenInterval = setInterval(() => {
+                                    gameList = document.querySelector("#gameList table tbody");
+                                    if (gameList) {
+                                        let isOk = goOrder(gameList);
+                                        if (isOk || !isAutoMode) {
+                                            clearInterval(listenInterval);
+                                        } else {
+                                            console.log("重新點選立即購票");
+                                            buyTicket.click();
+                                        }
+                                    }
+                                }, 400);
+                            }
                         }
+
                         break;
                     case "v":
                         // 輸入驗證碼：國泰信用卡卡號
@@ -88,6 +107,9 @@ if (triggerUrl.includes("activity/detail/")) {
                                 }
                             }
                         }
+
+                        // TODO:中國信託信用卡卡號 431195
+
                         break;
                     case "a":
                         // 自動選位
@@ -252,10 +274,11 @@ if (triggerUrl.includes("activity/detail/")) {
                     if (gameButton && !isSubmit) {
                         isSubmit = true;
                         gameButton.click();
-                        break;
+                        return true;
                     }
                 }
             }
+            return false;
         }
 
         function setCaptcha() {
@@ -265,9 +288,6 @@ if (triggerUrl.includes("activity/detail/")) {
                 fetch(imgSrc)
                     .then((response) => response.blob())
                     .then((blob) => {
-                        // blob size
-                        console.log("blob size", blob.size);
-
                         const formData = new FormData();
                         const file = new File([blob], "c.png", { type: "image/png" });
                         formData.append("image", file);
@@ -343,7 +363,16 @@ if (triggerUrl.includes("activity/detail/")) {
             document.body.appendChild(divConsole);
             divConsole.addEventListener("click", () => {
                 localStorage.setItem("autoMode", isAutoMode ? 0 : 1);
-                window.location.reload();
+                if (isAutoMode) {
+                    isAutoMode = false;
+                    divConsole.style.backgroundColor = "red";
+                    divConsole.textContent = "Manual";
+                } else {
+                    isAutoMode = true;
+                    divConsole.style.backgroundColor = "green";
+                    divConsole.textContent = "🤖";
+                    window.location.reload(true);
+                }
             });
         }
     });
