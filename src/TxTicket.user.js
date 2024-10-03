@@ -328,7 +328,12 @@ if (triggerUrl.includes("activity/detail/")) {
             if (submit) {
                 submit.style.fontSize = "24px";
                 submit.style.height = "100px";
-                submit.style.width = "240px";
+                submit.style.width = "100%";
+                const reSelect = document.getElementById("reSelect");
+                if (reSelect) {
+                    const parentDiv = reSelect.parentNode;
+                    parentDiv.insertBefore(submit, reSelect);
+                }
             }
         }
 
