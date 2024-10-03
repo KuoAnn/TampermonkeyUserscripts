@@ -95,21 +95,24 @@ if (triggerUrl.includes("activity/detail/")) {
 
                         break;
                     case "v":
-                        // 輸入驗證碼：國泰信用卡卡號
-                        const promoTitle = document.querySelector(".promo-title");
-                        if (promoTitle && promoTitle.textContent.includes("國泰世華")) {
-                            const promoDesc = document.querySelector(".promo-desc");
-                            if (promoDesc && promoDesc.textContent.includes("卡號前8碼")) {
+                        // 輸入驗證碼：
+                        const promoDesc = document.querySelector(".promo-desc");
+                        if (promoDesc) {
+                            // 國泰信用卡卡號
+                            if (promoDesc.textContent.includes("國泰世華") && promoDesc.textContent.includes("卡號前8碼")) {
                                 const checkCodeInput = document.querySelector(".greyInput[name=checkCode]");
                                 if (checkCodeInput) {
-                                    checkCodeInput.value = "40637634"; // 國泰信用卡卡號前 8 碼
+                                    checkCodeInput.value = "40637634";
+                                    autoSubmit();
+                                }
+                            } else if (promoDesc.textContent.includes("中國信託") && promoDesc.textContent.includes("卡號前6碼")) {
+                                const checkCodeInput = document.querySelector(".greyInput[name=checkCode]");
+                                if (checkCodeInput) {
+                                    checkCodeInput.value = "431195";
                                     autoSubmit();
                                 }
                             }
                         }
-
-                        // TODO:中國信託信用卡卡號 431195
-
                         break;
                     case "a":
                         // 自動選位
