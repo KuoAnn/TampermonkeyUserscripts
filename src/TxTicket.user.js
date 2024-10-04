@@ -75,13 +75,14 @@ if (triggerUrl.includes("activity/detail/")) {
                         }
 
                         if (isAutoMode) {
-                            let gameList = document.querySelector("#gameList table tbody");
+                            const gameList = document.querySelector("#gameList table tbody");
                             if (gameList && !isSubmit && !isListenOrder) {
                                 isListenOrder = true;
                                 const listenInterval = setInterval(() => {
-                                    gameList = document.querySelector("#gameList table tbody");
+                                    const gameList = document.querySelector("#gameList table tbody");
                                     if (gameList) {
-                                        let isOk = goOrder(gameList);
+                                        const isOk = goOrder(gameList);
+                                        const isAutoMode = (localStorage.getItem("autoMode") || 0) == 1;
                                         if (isOk || !isAutoMode) {
                                             clearInterval(listenInterval);
                                         } else {
@@ -350,8 +351,10 @@ if (triggerUrl.includes("activity/detail/")) {
                 return;
             }
             isSetConsole = true;
+            const isLogin = !!document.querySelector(".user-name");
 
             const divConsole = document.createElement("div");
+            document.body.appendChild(divConsole);
             divConsole.id = "divConsole";
             divConsole.style.position = "fixed";
             divConsole.style.top = "0";
@@ -361,27 +364,38 @@ if (triggerUrl.includes("activity/detail/")) {
             divConsole.style.zIndex = "9999";
             divConsole.style.color = "white";
             divConsole.style.cursor = "pointer";
-            if (isAutoMode) {
-                divConsole.style.backgroundColor = "green";
-                divConsole.textContent = "🤖";
-            } else {
-                divConsole.style.backgroundColor = "red";
-                divConsole.textContent = "Manual";
-            }
-            document.body.appendChild(divConsole);
+            setDivConsoleText(divConsole, isAutoMode, isLogin);
             divConsole.addEventListener("click", () => {
+                let isAutoMode = (localStorage.getItem("autoMode") || 0) == 1;
                 localStorage.setItem("autoMode", isAutoMode ? 0 : 1);
-                if (isAutoMode) {
-                    isAutoMode = false;
-                    divConsole.style.backgroundColor = "red";
-                    divConsole.textContent = "Manual";
-                } else {
-                    isAutoMode = true;
-                    divConsole.style.backgroundColor = "green";
-                    divConsole.textContent = "🤖";
-                    window.location.reload(true);
-                }
+                setDivConsoleText(divConsole, isAutoMode, isLogin, true);
             });
+
+            function setDivConsoleText(divConsole, isAutoMode, isLogin, isToggle) {
+                console.log(isAutoMode, isToggle);
+                if (isToggle) {
+                    isAutoMode = !isAutoMode;
+                }
+                console.log(`isAutoMode: ${isAutoMode}`);
+                if (isAutoMode) {
+                    divConsole.style.backgroundColor = "green";
+                    if (isLogin) {
+                        divConsole.textContent = "🤖";
+                        if (isToggle) window.location.reload(true);
+                    } else {
+                        divConsole.textContent = "🤖 未登入";
+                        if (isToggle) {
+                            const loginBtn = document.querySelector(".account-login a");
+                            if (loginBtn) {
+                                loginBtn.click();
+                            }
+                        }
+                    }
+                } else {
+                    divConsole.style.backgroundColor = "red";
+                    divConsole.textContent = !isLogin ? "🖐️ 未登入" : "🖐️";
+                }
+            }
         }
     });
 
