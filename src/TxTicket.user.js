@@ -2,8 +2,8 @@
 // @name         TxTicket
 // @namespace    http://tampermonkey.net/
 // @source       https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/TxTicket.user.js
-// @version      1.0.3
-// @description  強化UI/勾選同意條款/銀行辨識/選取購票/點選立即購票/選擇付款方式/alt+↓=切換日期/Enter送出/關閉提醒/移除廣告
+// @version      1.0.4
+// @description  強化UI/勾選同意條款/銀行辨識/選取購票/點選立即購票/選擇付款方式/alt+↓=切換日期/Enter送出/關閉提醒/移除廣告/執行倒數
 // @author       You
 // @match        https://tixcraft.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=tixcraft.com
@@ -14,9 +14,11 @@ const buyDateIndexes = [2, 3, -1]; // 場次優先順序：0=第一場 1=第二�
 const buyArea = ["VIP", ""]; // 座位優先順序，建議嚴謹>鬆散；以空白作為 AND 邏輯：空值=任一場
 const buyCount = 4; // 購買張數，若無則選擇最大值
 const payType = "A"; // 付款方式：A=ATM, C=信用卡
+const executeTime = "2024/10/5 23:31:30"; // 啟動時間：HH:mm:ss，空值=立即執行
 
 // 系統參數(勿動)
 let isAutoMode = (localStorage.getItem("autoMode") || 0) == 1;
+let countdownInterval = null;
 let isSetConsole = false;
 let session = "";
 let isSelectArea = false;
@@ -435,17 +437,44 @@ if (triggerUrl.includes("activity/detail/")) {
                 setDivConsoleText(divConsole, isAutoMode, isLogin, true);
             });
 
+            function countdown() {
+                // 判斷距離執行時間剩餘秒數，若大於 0 則進行秒數倒數，並即時將剩餘秒數印出，否則重新整理
+                console.log("countdown:", executeTime);
+                const now = new Date();
+                const executeDate = new Date(executeTime);
+                let diff = executeDate - now;
+                if (diff > 0) {
+                    let seconds = Math.floor(diff / 1000);
+                    countdownInterval = setInterval(() => {
+                        seconds--;
+                        if (seconds <= 0) {
+                            clearInterval(countdownInterval);
+                            window.location.reload(true);
+                        } else {
+                            divConsole.textContent = `🤖 ${seconds} 秒`;
+                        }
+                    }, 1000);
+                } else {
+                    window.location.reload(true);
+                }
+            }
+
             function setDivConsoleText(divConsole, isAutoMode, isLogin, isToggle) {
                 console.log(isAutoMode, isToggle);
                 if (isToggle) {
                     isAutoMode = !isAutoMode;
                 }
-                console.log(`isAutoMode: ${isAutoMode}`);
                 if (isAutoMode) {
                     divConsole.style.backgroundColor = "green";
                     if (isLogin) {
                         divConsole.textContent = "🤖";
-                        if (isToggle) window.location.reload(true);
+                        if (isToggle) {
+                            if (executeTime && executeTime.length > 0) {
+                                countdown();
+                            } else {
+                                window.location.reload(true);
+                            }
+                        }
                     } else {
                         divConsole.textContent = "🤖 未登入";
                         if (isToggle) {
@@ -458,6 +487,11 @@ if (triggerUrl.includes("activity/detail/")) {
                 } else {
                     divConsole.style.backgroundColor = "red";
                     divConsole.textContent = !isLogin ? "💪 未登入" : "💪";
+                    if (isToggle) {
+                        if (countdownInterval != null) {
+                            clearInterval(countdownInterval);
+                        }
+                    }
                 }
             }
         }
