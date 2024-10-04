@@ -1,19 +1,17 @@
 // ==UserScript==
 // @name         TxTicket
 // @namespace    http://tampermonkey.net/
-// @source       https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/TxTicket.js
+// @source       https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/TxTicket.user.js
 // @version      1.0.3
 // @description  強化UI/勾選同意條款/銀行辨識/選取購票/點選立即購票/選擇付款方式/alt+↓=切換日期/Enter送出/關閉提醒/移除廣告
 // @author       You
 // @match        https://tixcraft.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=tixcraft.com
-// @downloadURL  https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/TxTicket.js
-// @updateURL    https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/TxTicket.js
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
 // 個人參數
 const buyDateIndexes = [2, 3, -1]; // 場次優先順序：0=第一場 1=第二場... 負數=任一場
-const buyArea = ["VIP",""]; // 座位優先順序，建議嚴謹>鬆散；以空白作為 AND 邏輯：空值=任一場
+const buyArea = ["VIP", ""]; // 座位優先順序，建議嚴謹>鬆散；以空白作為 AND 邏輯：空值=任一場
 const buyCount = 4; // 購買張數，若無則選擇最大值
 const payType = "A"; // 付款方式：A=ATM, C=信用卡
 
@@ -28,6 +26,7 @@ let isOcr = false;
 let isClickPayType = false;
 let isSubmit = false;
 let isListenOrder = false;
+let isGetCaptcha = false;
 
 // 取得當前網址
 const triggerUrl = window.location.href;
@@ -53,13 +52,14 @@ if (triggerUrl.includes("activity/detail/")) {
                 if (session != "d" && session != "g") {
                     observer.disconnect();
                 }
+
+                // 自動模式提示
+                SetConsole();
+
                 const ad = document.getElementById("ad-footer");
                 if (ad) {
                     ad.remove();
                 }
-
-                // 自動模式提示
-                SetConsole();
 
                 // 自動關閉提醒
                 const closeAlert = document.querySelector("button.close-alert");
@@ -160,20 +160,19 @@ if (triggerUrl.includes("activity/detail/")) {
                         }
 
                         // 輸入圖形驗證碼
-                        const verifyCodeInput = document.getElementById("TicketForm_verifyCode");
-                        if (verifyCodeInput) {
-                            verifyCodeInput.addEventListener("input", (e) => {
-                                if (e.target.value.length == 4) {
-                                    autoSubmit();
-                                }
-                            });
-
-                            verifyCodeInput.focus();
-
+                        const captchaInput = document.getElementById("TicketForm_verifyCode");
+                        if (captchaInput) {
                             if (isAutoMode && !isOcr) {
                                 isOcr = true;
                                 setCaptcha();
                             }
+
+                            captchaInput.focus();
+                            captchaInput.addEventListener("input", (e) => {
+                                if (e.target.value.length == 4) {
+                                    autoSubmit();
+                                }
+                            });
                         }
                         break;
                     case "c":
@@ -196,7 +195,7 @@ if (triggerUrl.includes("activity/detail/")) {
                         break;
                 }
 
-                // 放大提交按鈕
+                // 共用優化 UI
                 largerSubmit();
             }
         });
@@ -297,42 +296,95 @@ if (triggerUrl.includes("activity/detail/")) {
             return false;
         }
 
-        function setCaptcha() {
-            const img = document.getElementById("TicketForm_verifyCode-image");
-            if (img) {
-                const imgSrc = img.src;
-                fetch(imgSrc)
-                    .then((response) => response.blob())
-                    .then((blob) => {
-                        const formData = new FormData();
-                        const file = new File([blob], "c.png", { type: "image/png" });
-                        formData.append("image", file);
+        function get_ocr_image() {
+            let image_data = "";
+            let img = document.querySelector("#TicketForm_verifyCode-image");
+            if (img != null) {
+                let canvas = document.createElement("canvas");
+                let context = canvas.getContext("2d");
+                canvas.height = img.naturalHeight;
+                canvas.width = img.naturalWidth;
+                context.drawImage(img, 0, 0);
+                let img_data = canvas.toDataURL();
+                if (img_data) {
+                    image_data = img_data.split(",")[1];
+                }
+            }
+            return image_data;
+        }
 
-                        const ocr = GM_xmlhttpRequest({
-                            method: "POST",
-                            url: "https://asia-east1-futureminer.cloudfunctions.net/ocr",
-                            data: formData,
-                            onload: function (r) {
-                                isOcr = false;
-                                if (r.status == 200) {
-                                    const captcha = r.responseText;
-                                    if (captcha.length == 4) {
-                                        const verifyCodeInput = document.getElementById("TicketForm_verifyCode");
-                                        if (verifyCodeInput) {
-                                            verifyCodeInput.value = captcha;
-                                            autoSubmit();
-                                        }
-                                    }
-                                } else {
-                                    console.error("上傳失敗", r.statusText + "|" + r.responseText);
+        function setCaptcha() {
+            const image_data = get_ocr_image();
+            if (image_data) {
+                try {
+                    getCaptcha("http://maxbot.dropboxlike.com:16888/ocr", image_data);
+                    getCaptcha("https://asia-east1-futureminer.cloudfunctions.net/ocr", image_data);
+                } catch (error) {
+                    console.error("Error:", error);
+                }
+            }
+        }
+
+        function getCaptcha(url, image_data) {
+            GM_xmlhttpRequest({
+                method: "POST",
+                url: url,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                data: JSON.stringify({ image_data: image_data }),
+                onload: function (r) {
+                    console.log(url, r.responseText);
+                    isOcr = false;
+                    if (r.status == 200) {
+                        const answer = JSON.parse(r.responseText).answer;
+                        if (answer.length == 4) {
+                            if (!isGetCaptcha) {
+                                console.log(url + " return " + answer);
+                                isGetCaptcha = true;
+                                const verifyCodeInput = document.getElementById("TicketForm_verifyCode");
+                                if (verifyCodeInput) {
+                                    verifyCodeInput.value = answer;
+                                    autoSubmit();
                                 }
-                            },
-                            onerror: function (error) {
-                                console.error("Error:", error);
-                            },
-                        });
-                    })
-                    .catch((error) => console.error("Fetch error:", error));
+                            } else {
+                                console.log(url + " unuse " + answer);
+                            }
+                        } else if (!isGetCaptcha) {
+                            isGetCaptcha = true;
+                            console.log(url + " retry");
+                            refreshCaptcha(url);
+                        }
+                    } else {
+                        console.error(url + " Fail", r.statusText + "|" + r.responseText);
+                    }
+                },
+                onerror: function (error) {
+                    console.error(url + " Error:", error);
+                },
+            });
+        }
+
+        function refreshCaptcha(url) {
+            const imgCaptcha = document.getElementById("TicketForm_verifyCode-image");
+            if (imgCaptcha) {
+                imgCaptcha.click();
+                // 輪詢 TicketForm_verifyCode-image 查看 src 屬性是否有變化
+                const src = imgCaptcha.src;
+                console.log("src", src);
+                const interval = setInterval(() => {
+                    if (src != imgCaptcha.src) {
+                        console.log("src changed", imgCaptcha.src);
+                        const image_data = get_ocr_image();
+                        if (image_data) {
+                            clearInterval(interval);
+                            isGetCaptcha = false;
+                            getCaptcha(url, image_data);
+                        } else {
+                            console.log("image_data is empty");
+                        }
+                    }
+                }, 100);
             }
         }
 
