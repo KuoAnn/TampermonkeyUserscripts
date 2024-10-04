@@ -12,8 +12,8 @@
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
 // 個人參數
-const buyDateIndexes = [2, 3]; // 場次優先順序：0=第一場 1=第二場...；若空值則預設最後一場
-const buyArea = ["VIP"]; // 座位優先順序，建議嚴謹>鬆散；以空白作為 AND 邏輯：空值=不限
+const buyDateIndexes = [2, 3, -1]; // 場次優先順序：0=第一場 1=第二場... 負數=任一場
+const buyArea = ["VIP"]; // 座位優先順序，建議嚴謹>鬆散；以空白作為 AND 邏輯：空值=任一場
 const buyCount = 4; // 購買張數，若無則選擇最大值
 const payType = "A"; // 付款方式：A=ATM, C=信用卡
 
@@ -273,7 +273,15 @@ if (triggerUrl.includes("activity/detail/")) {
                     index = gameRows.length - 1;
                 }
 
-                if (gameRows[index]) {
+                if (index < 0) {
+                    // 隨機場次
+                    const gameButtons = gameList.querySelectorAll("button");
+                    if (gameButtons.length > 0) {
+                        const randomIndex = Math.floor(Math.random() * gameButtons.length);
+                        gameButtons[randomIndex].click();
+                        return true;
+                    }
+                } else if (gameRows[index]) {
                     const gameButton = gameRows[index].querySelector("button");
                     if (gameButton && !isSubmit) {
                         isSubmit = true;
