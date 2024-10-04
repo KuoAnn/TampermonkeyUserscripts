@@ -393,7 +393,7 @@ if (triggerUrl.includes("activity/detail/")) {
                     }
                 } else {
                     divConsole.style.backgroundColor = "red";
-                    divConsole.textContent = !isLogin ? "🖐️ 未登入" : "🖐️";
+                    divConsole.textContent = !isLogin ? "💪 未登入" : "💪";
                 }
             }
         }
