@@ -2,8 +2,8 @@
 // @name         TxTicket
 // @namespace    http://tampermonkey.net/
 // @source       https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/TxTicket.js
-// @version      1.0.1
-// @description  1. 自動勾選同意條款 2. 自動輸入驗證碼 3. 自動選取購票 n 張 4. 自動點選立即購票 5. 自動選擇付款方式 6. 提交按鈕變大 7. alt+方向鍵下：選擇下一個售票日期 8. Enter 鍵直接送出 9. 自動關閉提醒
+// @version      1.0.3
+// @description  強化UI/勾選同意條款/銀行辨識/選取購票/點選立即購票/選擇付款方式/alt+↓=切換日期/Enter送出/關閉提醒/移除廣告
 // @author       You
 // @match        https://tixcraft.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=tixcraft.com
@@ -13,7 +13,7 @@
 // ==/UserScript==
 // 個人參數
 const buyDateIndexes = [2, 3, -1]; // 場次優先順序：0=第一場 1=第二場... 負數=任一場
-const buyArea = ["VIP"]; // 座位優先順序，建議嚴謹>鬆散；以空白作為 AND 邏輯：空值=任一場
+const buyArea = ["VIP",""]; // 座位優先順序，建議嚴謹>鬆散；以空白作為 AND 邏輯：空值=任一場
 const buyCount = 4; // 購買張數，若無則選擇最大值
 const payType = "A"; // 付款方式：A=ATM, C=信用卡
 
@@ -52,6 +52,10 @@ if (triggerUrl.includes("activity/detail/")) {
             if (mutation.type === "childList") {
                 if (session != "d" && session != "g") {
                     observer.disconnect();
+                }
+                const ad = document.getElementById("ad-footer");
+                if (ad) {
+                    ad.remove();
                 }
 
                 // 自動模式提示
