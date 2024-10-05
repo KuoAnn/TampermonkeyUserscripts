@@ -285,11 +285,11 @@ if (triggerUrl.includes("activity/detail/")) {
                         for (const element of randomElements) {
                             if (isExcluded(element)) continue;
 
-                            const matchCount = buyAreaKeys.filter((key) => element.textContent.includes(key)).length;
-                            if (!_isSubmit && matchCount > 0 && matchCount === buyAreaKeys.length) {
+                            const isAllMatch = buyAreaKeys.every((key) => element.textContent.includes(key));
+                            if (!_isSubmit && isAllMatch) {
                                 _isSubmit = true;
+                                console.log("pick", element.textContent);
                                 element.click();
-                                // console.log("pick", element.textContent);
                                 return true;
                             }
                         }
@@ -300,14 +300,8 @@ if (triggerUrl.includes("activity/detail/")) {
 
             function isExcluded(element) {
                 const text = element.textContent;
-                if (
-                    text.includes("輪椅") ||
-                    text.includes("身障") ||
-                    text.includes("障礙") ||
-                    text.includes("Restricted") ||
-                    text.includes("遮蔽") ||
-                    text.includes("視線不完整")
-                ) {
+                const excludeKeywords = ["輪椅", "身障", "障礙", "Restricted", "遮蔽", "視線不完整"];
+                if (excludeKeywords.some((keyword) => text.includes(keyword))) {
                     return true;
                 }
 
@@ -387,7 +381,7 @@ if (triggerUrl.includes("activity/detail/")) {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                data: JSON.stringify({ image_data: image_data }),
+                data: JSON.stringify({ image_data }),
                 onload: function (r) {
                     console.log(url, r.responseText);
                     _isOcr = false;
