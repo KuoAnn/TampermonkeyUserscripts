@@ -18,41 +18,41 @@ const PAY_TYPE = "A"; // 付款方式：A=ATM, C=信用卡
 const EXECUTE_TIME = "2024/10/10 23:31:30"; // 啟動時間：HH:mm:ss，"" OR 重整頁面=立即執行
 
 // 系統參數(勿動)
-let isAutoMode = (localStorage.getItem("autoMode") || 0) == 1;
-let countdownInterval = null;
-let isSetConsole = false;
-let session = "";
-let isSelectArea = false;
-let isSelect2Button = false;
-let isClickBuyTicket = false;
-let isOcr = false;
-let isClickPayType = false;
-let isSubmit = false;
-let isListenOrder = false;
-let isGetCaptcha = false;
+let sys_isAutoMode = (localStorage.getItem("autoMode") || 0) == 1;
+let sys_countdownInterval = null;
+let sys_isSetConsole = false;
+let sys_session = "";
+let sys_isSelectArea = false;
+let sys_isSelect2Button = false;
+let sys_isClickBuyTicket = false;
+let sys_isOcr = false;
+let sys_isClickPayType = false;
+let sys_isSubmit = false;
+let sys_isListenOrder = false;
+let sys_isGetCaptcha = false;
 
 // 取得當前網址
 const triggerUrl = window.location.href;
 if (triggerUrl.includes("activity/detail/")) {
-    session = "d";
+    sys_session = "d";
 } else if (triggerUrl.includes("ticket/game/")) {
-    session = "g";
+    sys_session = "g";
 } else if (triggerUrl.includes("ticket/verify/")) {
-    session = "v";
+    sys_session = "v";
 } else if (triggerUrl.includes("ticket/area/")) {
-    session = "a";
+    sys_session = "a";
 } else if (triggerUrl.includes("ticket/ticket/")) {
-    session = "t";
+    sys_session = "t";
 } else if (triggerUrl.includes("ticket/checkout/")) {
-    session = "c";
+    sys_session = "c";
 }
 
 (function () {
     "use strict";
-    const observer = new MutationObserver((mutationsList) => {
-        mutationsList.forEach((mutation) => {
+    const observer = new MutationObserver((mo) => {
+        mo.forEach((mutation) => {
             if (mutation.type === "childList") {
-                if (session != "d" && session != "g") {
+                if (sys_session != "d" && sys_session != "g") {
                     observer.disconnect();
                 }
 
@@ -70,21 +70,21 @@ if (triggerUrl.includes("activity/detail/")) {
                     closeAlert.click();
                 }
 
-                switch (session) {
+                switch (sys_session) {
                     case "d":
                     case "g":
                         // 活動頁
                         // 點選立即購票
                         const buyTicket = document.querySelector('a[href^="/activity/game/"]');
-                        if (buyTicket && !isClickBuyTicket) {
-                            isClickBuyTicket = true;
+                        if (buyTicket && !sys_isClickBuyTicket) {
+                            sys_isClickBuyTicket = true;
                             buyTicket.click();
                         }
 
-                        if (isAutoMode) {
+                        if (sys_isAutoMode) {
                             const gameList = document.querySelector("#gameList table tbody");
-                            if (gameList && !isSubmit && !isListenOrder) {
-                                isListenOrder = true;
+                            if (gameList && !sys_isSubmit && !sys_isListenOrder) {
+                                sys_isListenOrder = true;
                                 const listenInterval = setInterval(() => {
                                     const gameList = document.querySelector("#gameList table tbody");
                                     if (gameList) {
@@ -124,8 +124,8 @@ if (triggerUrl.includes("activity/detail/")) {
                         break;
                     case "a":
                         // 自動選位
-                        if (isAutoMode && !isSelectArea) {
-                            isSelectArea = true;
+                        if (sys_isAutoMode && !sys_isSelectArea) {
+                            sys_isSelectArea = true;
                             const isOk = selectArea();
                             if (!isOk) {
                                 setTimeout(() => {
@@ -165,8 +165,8 @@ if (triggerUrl.includes("activity/detail/")) {
                         // 輸入圖形驗證碼
                         const captchaInput = document.getElementById("TicketForm_verifyCode");
                         if (captchaInput) {
-                            if (isAutoMode && !isOcr) {
-                                isOcr = true;
+                            if (sys_isAutoMode && !sys_isOcr) {
+                                sys_isOcr = true;
                                 setCaptcha();
                             }
 
@@ -183,15 +183,15 @@ if (triggerUrl.includes("activity/detail/")) {
                         if (PAY_TYPE == "A") {
                             // 選擇 ATM 付款
                             const atmRadio = document.getElementById("CheckoutForm_paymentId_54");
-                            if (atmRadio && !isClickPayType) {
-                                isClickPayType = true;
+                            if (atmRadio && !sys_isClickPayType) {
+                                sys_isClickPayType = true;
                                 atmRadio.click();
                             }
                         } else if (PAY_TYPE == "C") {
                             // 選擇信用卡付款
                             const creditCardRadio = document.getElementById("CheckoutForm_paymentId_36");
-                            if (creditCardRadio && !isClickPayType) {
-                                isClickPayType = true;
+                            if (creditCardRadio && !sys_isClickPayType) {
+                                sys_isClickPayType = true;
                                 creditCardRadio.click();
                             }
                         }
@@ -205,8 +205,8 @@ if (triggerUrl.includes("activity/detail/")) {
 
         function select2Button() {
             const select = document.querySelector("#gameId");
-            if (select && !isSelect2Button) {
-                isSelect2Button = true;
+            if (select && !sys_isSelect2Button) {
+                sys_isSelect2Button = true;
                 // select.style.display = "none";
                 const title = document.querySelector(".activityT.title");
                 if (title) {
@@ -269,7 +269,7 @@ if (triggerUrl.includes("activity/detail/")) {
                     console.log("elements", elements);
 
                     for (let i = 0; i < BUY_AREA_SEATS.length; i++) {
-                        if (isSubmit) {
+                        if (sys_isSubmit) {
                             break;
                         }
                         const buyAreaKeys = BUY_AREA_SEATS[i].split(" ");
@@ -299,8 +299,8 @@ if (triggerUrl.includes("activity/detail/")) {
                                     matchCount++;
                                 }
                             });
-                            if (!isSubmit && matchCount > 0 && matchCount == buyAreaKeys.length) {
-                                isSubmit = true;
+                            if (!sys_isSubmit && matchCount > 0 && matchCount == buyAreaKeys.length) {
+                                sys_isSubmit = true;
                                 // a.click();
                                 console.log("pick up", text);
                                 return true;
@@ -331,8 +331,8 @@ if (triggerUrl.includes("activity/detail/")) {
                     }
                 } else if (gameRows[index]) {
                     const gameButton = gameRows[index].querySelector("button");
-                    if (gameButton && !isSubmit) {
-                        isSubmit = true;
+                    if (gameButton && !sys_isSubmit) {
+                        sys_isSubmit = true;
                         gameButton.click();
                         return true;
                     }
@@ -380,13 +380,13 @@ if (triggerUrl.includes("activity/detail/")) {
                 data: JSON.stringify({ image_data: image_data }),
                 onload: function (r) {
                     console.log(url, r.responseText);
-                    isOcr = false;
+                    sys_isOcr = false;
                     if (r.status == 200) {
                         const answer = JSON.parse(r.responseText).answer;
                         if (answer.length == 4) {
-                            if (!isGetCaptcha) {
+                            if (!sys_isGetCaptcha) {
                                 console.log(url + " return " + answer);
-                                isGetCaptcha = true;
+                                sys_isGetCaptcha = true;
                                 const verifyCodeInput = document.getElementById("TicketForm_verifyCode");
                                 if (verifyCodeInput) {
                                     verifyCodeInput.value = answer;
@@ -395,8 +395,8 @@ if (triggerUrl.includes("activity/detail/")) {
                             } else {
                                 console.log(url + " unuse " + answer);
                             }
-                        } else if (!isGetCaptcha) {
-                            isGetCaptcha = true;
+                        } else if (!sys_isGetCaptcha) {
+                            sys_isGetCaptcha = true;
                             console.log(url + " retry");
                             refreshCaptcha(url);
                         }
@@ -423,7 +423,7 @@ if (triggerUrl.includes("activity/detail/")) {
                         const image_data = get_ocr_image();
                         if (image_data) {
                             clearInterval(interval);
-                            isGetCaptcha = false;
+                            sys_isGetCaptcha = false;
                             getCaptcha(url, image_data);
                         } else {
                             console.log("image_data is empty");
@@ -457,10 +457,10 @@ if (triggerUrl.includes("activity/detail/")) {
         }
 
         function SetConsole() {
-            if (isSetConsole) {
+            if (sys_isSetConsole) {
                 return;
             }
-            isSetConsole = true;
+            sys_isSetConsole = true;
             const isLogin = !!document.querySelector(".user-name");
 
             const divConsole = document.createElement("div");
@@ -474,7 +474,7 @@ if (triggerUrl.includes("activity/detail/")) {
             divConsole.style.zIndex = "9999";
             divConsole.style.color = "white";
             divConsole.style.cursor = "pointer";
-            setDivConsoleText(divConsole, isAutoMode, isLogin);
+            setDivConsoleText(divConsole, sys_isAutoMode, isLogin);
             divConsole.addEventListener("click", () => {
                 let isAutoMode = (localStorage.getItem("autoMode") || 0) == 1;
                 localStorage.setItem("autoMode", isAutoMode ? 0 : 1);
@@ -489,10 +489,10 @@ if (triggerUrl.includes("activity/detail/")) {
                 let diff = executeDate - now;
                 if (diff > 0) {
                     let seconds = Math.floor(diff / 1000);
-                    countdownInterval = setInterval(() => {
+                    sys_countdownInterval = setInterval(() => {
                         seconds--;
                         if (seconds <= 0) {
-                            clearInterval(countdownInterval);
+                            clearInterval(sys_countdownInterval);
                             window.location.reload(true);
                         } else {
                             divConsole.textContent = `🤖 ${seconds} 秒`;
@@ -532,8 +532,8 @@ if (triggerUrl.includes("activity/detail/")) {
                     divConsole.style.backgroundColor = "red";
                     divConsole.textContent = !isLogin ? "💪 未登入" : "💪";
                     if (isToggle) {
-                        if (countdownInterval != null) {
-                            clearInterval(countdownInterval);
+                        if (sys_countdownInterval != null) {
+                            clearInterval(sys_countdownInterval);
                         }
                     }
                 }
@@ -566,8 +566,8 @@ if (triggerUrl.includes("activity/detail/")) {
 
 function autoSubmit() {
     const submit = document.querySelector("button[type=submit],#submitButton");
-    if (submit && !isSubmit) {
-        isSubmit = true;
+    if (submit && !sys_isSubmit) {
+        sys_isSubmit = true;
         submit.click();
     }
 }
