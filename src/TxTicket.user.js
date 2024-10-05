@@ -12,7 +12,7 @@
 // 個人參數
 const BUY_DATE_INDEXS = [1, 2, -1]; // 場次優先順序：1=第一場 2=第二場... 負數=隨機 (搶票瞬間因無法確認售完，基本上就是選第一順位)
 const BUY_AREA_GROUPS = ["3600", "3400", "3000"]; // 座位群組(通常是價位)：""=全部 (座位會被鎖定在此群內；安全機制：若查無群組則預設全選)
-const BUY_AREA_SEATS = ["紫"]; // 座位優先順序；""=隨機 空白分隔=AND邏輯 (需注意是否和座位群組互斥)
+const BUY_AREA_SEATS = [""]; // 座位優先順序；""=隨機 空白分隔=AND邏輯 (需注意是否和座位群組互斥)
 const BUY_COUNT = 4; // 購買張數，若無則選擇最大值
 const PAY_TYPE = "A"; // 付款方式：A=ATM, C=信用卡
 const EXECUTE_TIME = "2024/10/10 23:31:30"; // 啟動時間：HH:mm:ss，"" OR 重整頁面=立即執行
@@ -48,7 +48,7 @@ if (triggerUrl.includes("activity/detail/")) {
 }
 
 (function () {
-    "use strict";
+    ("use strict");
     const observer = new MutationObserver((mo) => {
         mo.forEach((mutation) => {
             if (mutation.type === "childList") {
@@ -86,11 +86,11 @@ if (triggerUrl.includes("activity/detail/")) {
                             if (gameList && !sys_isSubmit && !sys_isListenOrder) {
                                 sys_isListenOrder = true;
                                 const listenInterval = setInterval(() => {
-                                    const gameList = document.querySelector("#gameList table tbody");
-                                    if (gameList) {
-                                        const isOk = goOrder(gameList);
-                                        const isAutoMode = (localStorage.getItem("autoMode") || 0) == 1;
-                                        if (isOk || !isAutoMode) {
+                                    const updatedGameList = document.querySelector("#gameList table tbody");
+                                    if (updatedGameList) {
+                                        const isOrderSuccessful = goOrder(updatedGameList);
+                                        const isAutoModeEnabled = localStorage.getItem("autoMode") === "1";
+                                        if (isOrderSuccessful || !isAutoModeEnabled) {
                                             clearInterval(listenInterval);
                                         } else {
                                             console.log("重新點選立即購票");
@@ -105,20 +105,21 @@ if (triggerUrl.includes("activity/detail/")) {
                     case "v":
                         // 輸入驗證碼：
                         const promoDesc = document.querySelector(".promo-desc");
+
+                        function setCheckCodeAndSubmit(code) {
+                            const checkCodeInput = document.querySelector(".greyInput[name=checkCode]");
+                            if (checkCodeInput) {
+                                checkCodeInput.value = code;
+                                autoSubmit();
+                            }
+                        }
+
                         if (promoDesc) {
-                            // 國泰信用卡卡號
-                            if (promoDesc.textContent.includes("國泰世華") && promoDesc.textContent.includes("卡號前8碼")) {
-                                const checkCodeInput = document.querySelector(".greyInput[name=checkCode]");
-                                if (checkCodeInput) {
-                                    checkCodeInput.value = "40637634";
-                                    autoSubmit();
-                                }
-                            } else if (promoDesc.textContent.includes("中國信託") && promoDesc.textContent.includes("卡號前6碼")) {
-                                const checkCodeInput = document.querySelector(".greyInput[name=checkCode]");
-                                if (checkCodeInput) {
-                                    checkCodeInput.value = "431195";
-                                    autoSubmit();
-                                }
+                            const textContent = promoDesc.textContent;
+                            if (textContent.includes("國泰世華") && textContent.includes("卡號前8碼")) {
+                                setCheckCodeAndSubmit("40637634");
+                            } else if (textContent.includes("中國信託") && textContent.includes("卡號前6碼")) {
+                                setCheckCodeAndSubmit("431195");
                             }
                         }
                         break;
@@ -140,60 +141,62 @@ if (triggerUrl.includes("activity/detail/")) {
                         break;
                     case "t":
                         // 確認訂單
+                        agreeToTerms();
+                        selectTicketQuantity();
+                        handleCaptchaInput();
+
                         // 勾選同意條款
-                        const ticketAgree = document.getElementById("TicketForm_agree");
-                        if (ticketAgree) {
-                            ticketAgree.checked = true;
+                        function agreeToTerms() {
+                            const ticketAgree = document.getElementById("TicketForm_agree");
+                            if (ticketAgree) {
+                                ticketAgree.checked = true;
+                            }
                         }
 
                         // 選取購票張數
-                        const ticketPrice = document.querySelector('[id^="TicketForm_ticketPrice_"]');
-                        if (ticketPrice) {
-                            const options = ticketPrice.querySelectorAll("option");
-                            let hasBuyCount = false;
-                            options.forEach((o) => {
-                                if (o.value == BUY_COUNT) {
-                                    hasBuyCount = true;
-                                    ticketPrice.value = BUY_COUNT;
-                                }
-                            });
-                            if (!hasBuyCount) {
-                                ticketPrice.value = options[options.length - 1].value;
+                        function selectTicketQuantity() {
+                            const ticketPrice = document.querySelector('[id^="TicketForm_ticketPrice_"]');
+                            if (ticketPrice) {
+                                const options = ticketPrice.querySelectorAll("option");
+                                const hasBuyCount = Array.from(options).some((o) => o.value == BUY_COUNT);
+                                ticketPrice.value = hasBuyCount ? BUY_COUNT : options[options.length - 1].value;
                             }
                         }
 
                         // 輸入圖形驗證碼
-                        const captchaInput = document.getElementById("TicketForm_verifyCode");
-                        if (captchaInput) {
-                            if (sys_isAutoMode && !sys_isOcr) {
-                                sys_isOcr = true;
-                                setCaptcha();
-                            }
-
-                            captchaInput.focus();
-                            captchaInput.addEventListener("input", (e) => {
-                                if (e.target.value.length == 4) {
-                                    autoSubmit();
+                        function handleCaptchaInput() {
+                            const captchaInput = document.getElementById("TicketForm_verifyCode");
+                            if (captchaInput) {
+                                if (sys_isAutoMode && !sys_isOcr) {
+                                    sys_isOcr = true;
+                                    setCaptcha();
                                 }
-                            });
+
+                                captchaInput.focus();
+                                captchaInput.addEventListener("input", (e) => {
+                                    if (e.target.value.length == 4) {
+                                        autoSubmit();
+                                    }
+                                });
+                            }
                         }
                         break;
                     case "c":
                         // 付款
+                        function selectPaymentMethod(elementId) {
+                            const paymentRadio = document.getElementById(elementId);
+                            if (!sys_isClickPayType && paymentRadio) {
+                                sys_isClickPayType = true;
+                                paymentRadio.click();
+                            }
+                        }
+
                         if (PAY_TYPE == "A") {
                             // 選擇 ATM 付款
-                            const atmRadio = document.getElementById("CheckoutForm_paymentId_54");
-                            if (atmRadio && !sys_isClickPayType) {
-                                sys_isClickPayType = true;
-                                atmRadio.click();
-                            }
+                            selectPaymentMethod("CheckoutForm_paymentId_54");
                         } else if (PAY_TYPE == "C") {
                             // 選擇信用卡付款
-                            const creditCardRadio = document.getElementById("CheckoutForm_paymentId_36");
-                            if (creditCardRadio && !sys_isClickPayType) {
-                                sys_isClickPayType = true;
-                                creditCardRadio.click();
-                            }
+                            selectPaymentMethod("CheckoutForm_paymentId_36");
                         }
                         break;
                 }
@@ -207,12 +210,14 @@ if (triggerUrl.includes("activity/detail/")) {
             const select = document.querySelector("#gameId");
             if (select && !sys_isSelect2Button) {
                 sys_isSelect2Button = true;
-                // select.style.display = "none";
                 const title = document.querySelector(".activityT.title");
                 if (title) {
                     title.style.display = "none";
                 }
+
+                const fragment = document.createDocumentFragment();
                 const selectOptions = select.querySelectorAll("option");
+
                 selectOptions.forEach((option) => {
                     const b = document.createElement("button");
                     const dateText = option.textContent.match(/\d{4}\/\d{2}\/\d{2} \(\S+\)/);
@@ -221,88 +226,69 @@ if (triggerUrl.includes("activity/detail/")) {
                         select.value = option.value;
                         select.dispatchEvent(new Event("change", { bubbles: true }));
                     };
-                    b.style.padding = "2px 6px";
-                    b.style.margin = "2px";
-                    b.style.border = "1px solid #ccc";
-                    if (option.selected) {
-                        b.style.backgroundColor = "#007bff";
-                        b.style.color = "#fff";
-                    }
-
-                    select.before(b);
+                    setButtonStyle(b, option.selected);
+                    fragment.appendChild(b);
                 });
+
+                select.before(fragment);
+            }
+
+            function setButtonStyle(button, isSelected) {
+                button.style.padding = "2px 6px";
+                button.style.margin = "2px";
+                button.style.border = "1px solid #ccc";
+                if (isSelected) {
+                    button.style.backgroundColor = "#007bff";
+                    button.style.color = "#fff";
+                }
             }
         }
 
         function selectArea() {
-            // areaGroup
             const groups = document.querySelectorAll(".zone-label");
-            const selectedGroups = [];
-            if (groups && groups.length > 0 && BUY_AREA_GROUPS.length > 0 && BUY_AREA_GROUPS[0] != "") {
-                for (let i = 0; i < BUY_AREA_GROUPS.length; i++) {
-                    for (let j = 0; j < groups.length; j++) {
-                        const group = groups[j];
-                        if (group.textContent.includes(BUY_AREA_GROUPS[i])) {
-                            // push data-id to selectedGroups
-                            const dataId = group.getAttribute("data-id");
-                            if (dataId) selectedGroups.push(dataId);
-                        }
-                    }
-                }
-            }
+            const selectedGroups = getSelectedGroups(groups);
 
-            // areaSeat
             if (selectedGroups.length > 0) {
-                for (let i = 0; i < selectedGroups.length; i++) {
-                    const eleAreas = document.querySelectorAll(`#${selectedGroups[i]} li a`);
-                    console.log(selectedGroups[i], eleAreas);
-                    if (selectAreaSeat(eleAreas)) return true;
+                for (const groupId of selectedGroups) {
+                    const areaElements = document.querySelectorAll(`#${groupId} li a`);
+                    console.log(groupId, areaElements);
+                    if (selectAreaSeat(areaElements)) return true;
                 }
                 return false;
             } else {
                 return selectAreaSeat(document.querySelectorAll(".zone-label li a"));
             }
 
-            function selectAreaSeat(elements) {
-                if (elements && elements.length > 0) {
-                    elements = Array.from(elements).sort(() => Math.random() - 0.5);
-                    console.log("elements", elements);
+            function getSelectedGroups(groups) {
+                const selectedGroups = [];
+                if (groups.length > 0 && BUY_AREA_GROUPS.length > 0 && BUY_AREA_GROUPS[0] !== "") {
+                    BUY_AREA_GROUPS.forEach((buyGroup) => {
+                        groups.forEach((group) => {
+                            if (group.textContent.includes(buyGroup)) {
+                                const dataId = group.getAttribute("data-id");
+                                if (dataId) selectedGroups.push(dataId);
+                            }
+                        });
+                    });
+                }
+                return selectedGroups;
+            }
 
-                    for (let i = 0; i < BUY_AREA_SEATS.length; i++) {
-                        if (sys_isSubmit) {
-                            break;
-                        }
-                        const buyAreaKeys = BUY_AREA_SEATS[i].split(" ");
-                        for (let j = 0; j < elements.length; j++) {
-                            const a = elements[j];
-                            const text = a.textContent;
-                            if (
-                                text.includes("輪椅") ||
-                                text.includes("身障") ||
-                                text.includes("障礙") ||
-                                text.includes("Restricted") ||
-                                text.includes("遮蔽") ||
-                                text.includes("視線不完整")
-                            ) {
-                                continue;
-                            }
-                            const remainFont = a.querySelector("font");
-                            if (remainFont) {
-                                const remainCount = remainFont.textContent.replace("剩餘 ", "");
-                                if (remainCount < BUY_COUNT) {
-                                    continue;
-                                }
-                            }
-                            let matchCount = 0;
-                            buyAreaKeys.forEach((key) => {
-                                if (text.includes(key)) {
-                                    matchCount++;
-                                }
-                            });
-                            if (!sys_isSubmit && matchCount > 0 && matchCount == buyAreaKeys.length) {
+            function selectAreaSeat(elements) {
+                if (elements.length > 0) {
+                    const randomElements = Array.from(elements).sort(() => Math.random() - 0.5);
+
+                    for (const seat of BUY_AREA_SEATS) {
+                        if (sys_isSubmit) break;
+
+                        const buyAreaKeys = seat.split(" ");
+                        for (const element of randomElements) {
+                            if (isExcluded(element)) continue;
+
+                            const matchCount = buyAreaKeys.filter((key) => element.textContent.includes(key)).length;
+                            if (!sys_isSubmit && matchCount > 0 && matchCount === buyAreaKeys.length) {
                                 sys_isSubmit = true;
-                                // a.click();
-                                console.log("pick up", text);
+                                element.click();
                                 return true;
                             }
                         }
@@ -310,52 +296,75 @@ if (triggerUrl.includes("activity/detail/")) {
                 }
                 return false;
             }
+
+            function isExcluded(element) {
+                const text = element.textContent;
+                if (
+                    text.includes("輪椅") ||
+                    text.includes("身障") ||
+                    text.includes("障礙") ||
+                    text.includes("Restricted") ||
+                    text.includes("遮蔽") ||
+                    text.includes("視線不完整")
+                ) {
+                    return true;
+                }
+
+                const remainFont = element.querySelector("font");
+                if (remainFont) {
+                    const remainCount = parseInt(remainFont.textContent.replace("剩餘 ", ""), 10);
+                    if (remainCount < BUY_COUNT) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
         }
 
         function goOrder(gameList) {
-            let gameRows = gameList.querySelectorAll("tr");
+            if (!gameList) return false;
 
-            for (let i = 0; i < BUY_DATE_INDEXS.length; i++) {
-                let index = BUY_DATE_INDEXS[i] - 1;
-                if (index >= gameRows.length) {
-                    index = -1; // 預設隨機
+            const gameRows = gameList.querySelectorAll("tr");
+
+            const clickRandomGameButton = () => {
+                const gameButtons = gameList.querySelectorAll("button");
+                if (gameButtons.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * gameButtons.length);
+                    gameButtons[randomIndex].click();
+                    return true;
+                }
+                return false;
+            };
+
+            for (const index of BUY_DATE_INDEXS.map((i) => i - 1)) {
+                if (index >= gameRows.length || index < 0) {
+                    return clickRandomGameButton();
                 }
 
-                if (index < 0) {
-                    // 隨機場次
-                    const gameButtons = gameList.querySelectorAll("button");
-                    if (gameButtons.length > 0) {
-                        const randomIndex = Math.floor(Math.random() * gameButtons.length);
-                        gameButtons[randomIndex].click();
-                        return true;
-                    }
-                } else if (gameRows[index]) {
-                    const gameButton = gameRows[index].querySelector("button");
-                    if (gameButton && !sys_isSubmit) {
-                        sys_isSubmit = true;
-                        gameButton.click();
-                        return true;
-                    }
+                const gameButton = gameRows[index]?.querySelector("button");
+                if (gameButton && !sys_isSubmit) {
+                    sys_isSubmit = true;
+                    gameButton.click();
+                    return true;
                 }
             }
+
             return false;
         }
 
         function get_ocr_image() {
-            let image_data = "";
-            let img = document.querySelector("#TicketForm_verifyCode-image");
-            if (img != null) {
-                let canvas = document.createElement("canvas");
-                let context = canvas.getContext("2d");
+            const img = document.querySelector("#TicketForm_verifyCode-image");
+            if (img) {
+                const canvas = document.createElement("canvas");
+                const context = canvas.getContext("2d");
                 canvas.height = img.naturalHeight;
                 canvas.width = img.naturalWidth;
                 context.drawImage(img, 0, 0);
-                let img_data = canvas.toDataURL();
-                if (img_data) {
-                    image_data = img_data.split(",")[1];
-                }
+                const img_data = canvas.toDataURL();
+                return img_data ? img_data.split(",")[1] : "";
             }
-            return image_data;
+            return "";
         }
 
         function setCaptcha() {
@@ -436,23 +445,26 @@ if (triggerUrl.includes("activity/detail/")) {
         function largerSubmit() {
             const submit = document.querySelector("button[type=submit],#submitButton");
             if (submit) {
-                submit.style.fontSize = "24px";
-                submit.style.height = "100px";
-                submit.style.width = "100%";
-                submit.style.margin = "4px";
-                const reSelect = document.getElementById("reSelect");
-                if (reSelect) {
-                    const parentDiv = reSelect.parentNode;
-                    parentDiv.insertBefore(submit, reSelect);
+                Object.assign(submit.style, {
+                    fontSize: "24px",
+                    height: "100px",
+                    width: "100%",
+                    margin: "4px",
+                });
+
+                // 將 submit 按鈕移到最上方
+                const submitParent = submit.parentNode;
+                if (submitParent) {
+                    submitParent.prepend(submit);
                 }
             }
         }
 
         function removeSoldOut() {
-            const listItems = document.querySelectorAll("li");
-            const soldOutItems = Array.from(listItems).filter((li) => li.textContent.includes("已售完"));
-            soldOutItems.forEach((soldOut) => {
-                soldOut.remove();
+            document.querySelectorAll("li").forEach((li) => {
+                if (li.textContent.includes("已售完")) {
+                    li.remove();
+                }
             });
         }
 
@@ -463,26 +475,33 @@ if (triggerUrl.includes("activity/detail/")) {
             sys_isSetConsole = true;
             const isLogin = !!document.querySelector(".user-name");
 
-            const divConsole = document.createElement("div");
-            document.body.appendChild(divConsole);
-            divConsole.id = "divConsole";
-            divConsole.style.position = "fixed";
-            divConsole.style.top = "0";
-            divConsole.style.left = "0";
-            divConsole.style.padding = "10px";
-            divConsole.style.textAlign = "center";
-            divConsole.style.zIndex = "9999";
-            divConsole.style.color = "white";
-            divConsole.style.cursor = "pointer";
+            const divConsole = createConsoleElement();
             setDivConsoleText(divConsole, sys_isAutoMode, isLogin);
+
             divConsole.addEventListener("click", () => {
                 let isAutoMode = (localStorage.getItem("autoMode") || 0) == 1;
                 localStorage.setItem("autoMode", isAutoMode ? 0 : 1);
                 setDivConsoleText(divConsole, isAutoMode, isLogin, true);
             });
 
+            function createConsoleElement() {
+                const div = document.createElement("div");
+                document.body.appendChild(div);
+                div.id = "divConsole";
+                Object.assign(div.style, {
+                    position: "fixed",
+                    top: "0",
+                    left: "0",
+                    padding: "10px",
+                    textAlign: "center",
+                    zIndex: "9999",
+                    color: "white",
+                    cursor: "pointer",
+                });
+                return div;
+            }
+
             function countdown() {
-                // 判斷距離執行時間剩餘秒數，若大於 0 則進行秒數倒數，並即時將剩餘秒數印出，否則重新整理
                 console.log("countdown:", EXECUTE_TIME);
                 const now = new Date();
                 const executeDate = new Date(EXECUTE_TIME);
@@ -503,7 +522,7 @@ if (triggerUrl.includes("activity/detail/")) {
                 }
             }
 
-            function setDivConsoleText(divConsole, isAutoMode, isLogin, isToggle) {
+            function setDivConsoleText(divConsole, isAutoMode, isLogin, isToggle = false) {
                 console.log(isAutoMode, isToggle);
                 if (isToggle) {
                     isAutoMode = !isAutoMode;
@@ -531,10 +550,8 @@ if (triggerUrl.includes("activity/detail/")) {
                 } else {
                     divConsole.style.backgroundColor = "red";
                     divConsole.textContent = !isLogin ? "💪 未登入" : "💪";
-                    if (isToggle) {
-                        if (sys_countdownInterval != null) {
-                            clearInterval(sys_countdownInterval);
-                        }
+                    if (isToggle && sys_countdownInterval != null) {
+                        clearInterval(sys_countdownInterval);
                     }
                 }
             }
@@ -543,23 +560,9 @@ if (triggerUrl.includes("activity/detail/")) {
 
     observer.observe(document.body, { childList: true, subtree: true });
 
-    // alt+方向鍵下：選擇下一個售票日期
     document.addEventListener("keydown", function (e) {
         if (e.key === "Enter") {
             autoSubmit();
-        } else if (e.altKey && e.key === "ArrowDown") {
-            let select = document.querySelector("#gameId");
-            if (select) {
-                let selectedIndex = select.selectedIndex;
-                let optionsLength = select.options.length;
-
-                // Move to next option, or wrap around to the first one
-                select.selectedIndex = (selectedIndex + 1) % optionsLength;
-
-                // Trigger the change event
-                let event = new Event("change", { bubbles: true });
-                select.dispatchEvent(event);
-            }
         }
     });
 })();
