@@ -10,11 +10,12 @@
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
 // 個人參數
-const buyDateIndexes = [1, 2, -1]; // 場次優先順序：1=第一場 2=第二場... 負數=任一場
-const buyArea = ["VIP", ""]; // 座位優先順序，建議嚴謹>鬆散；以空白作為 AND 邏輯：空值=任一場
-const buyCount = 4; // 購買張數，若無則選擇最大值
-const payType = "A"; // 付款方式：A=ATM, C=信用卡
-const executeTime = "2024/10/10 23:31:30"; // 啟動時間：HH:mm:ss，空值=立即執行
+const BUY_DATE_INDEXS = [1, 2, -1]; // 場次優先順序：1=第一場 2=第二場... 負數=隨機 (搶票瞬間因無法確認售完，基本上就是選第一順位)
+const BUY_AREA_GROUPS = ["3600", "3400", "3000"]; // 座位群組(通常是價位)：""=全部 (座位會被鎖定在此群內；安全機制：若查無群組則預設全選)
+const BUY_AREA_SEATS = ["紫"]; // 座位優先順序；""=隨機 空白分隔=AND邏輯 (需注意是否和座位群組互斥)
+const BUY_COUNT = 4; // 購買張數，若無則選擇最大值
+const PAY_TYPE = "A"; // 付款方式：A=ATM, C=信用卡
+const EXECUTE_TIME = "2024/10/10 23:31:30"; // 啟動時間：HH:mm:ss，"" OR 重整頁面=立即執行
 
 // 系統參數(勿動)
 let isAutoMode = (localStorage.getItem("autoMode") || 0) == 1;
@@ -151,9 +152,9 @@ if (triggerUrl.includes("activity/detail/")) {
                             const options = ticketPrice.querySelectorAll("option");
                             let hasBuyCount = false;
                             options.forEach((o) => {
-                                if (o.value == buyCount) {
+                                if (o.value == BUY_COUNT) {
                                     hasBuyCount = true;
-                                    ticketPrice.value = buyCount;
+                                    ticketPrice.value = BUY_COUNT;
                                 }
                             });
                             if (!hasBuyCount) {
@@ -179,14 +180,14 @@ if (triggerUrl.includes("activity/detail/")) {
                         break;
                     case "c":
                         // 付款
-                        if (payType == "A") {
+                        if (PAY_TYPE == "A") {
                             // 選擇 ATM 付款
                             const atmRadio = document.getElementById("CheckoutForm_paymentId_54");
                             if (atmRadio && !isClickPayType) {
                                 isClickPayType = true;
                                 atmRadio.click();
                             }
-                        } else if (payType == "C") {
+                        } else if (PAY_TYPE == "C") {
                             // 選擇信用卡付款
                             const creditCardRadio = document.getElementById("CheckoutForm_paymentId_36");
                             if (creditCardRadio && !isClickPayType) {
@@ -234,58 +235,90 @@ if (triggerUrl.includes("activity/detail/")) {
         }
 
         function selectArea() {
-            const areas = document.querySelectorAll(".area_select li a");
-            if (areas && areas.length > 0) {
-                for (let i = 0; i < buyArea.length; i++) {
-                    if (isSubmit) {
-                        break;
-                    }
-                    const buyAreaKeys = buyArea[i].split(" ");
-                    for (let j = 0; j < areas.length; j++) {
-                        const a = areas[j];
-                        const text = a.textContent;
-                        if (
-                            text.includes("輪椅") ||
-                            text.includes("身障") ||
-                            text.includes("障礙") ||
-                            text.includes("Restricted") ||
-                            text.includes("遮蔽") ||
-                            text.includes("視線不完整")
-                        ) {
-                            continue;
-                        }
-                        const remainFont = a.querySelector("font");
-                        if (remainFont) {
-                            const remainCount = remainFont.textContent.replace("剩餘 ", "");
-                            if (remainCount < buyCount) {
-                                continue;
-                            }
-                        }
-                        let matchCount = 0;
-                        buyAreaKeys.forEach((key) => {
-                            if (text.includes(key)) {
-                                matchCount++;
-                            }
-                        });
-                        if (!isSubmit && matchCount > 0 && matchCount == buyAreaKeys.length) {
-                            isSubmit = true;
-                            a.click();
-                            return true;
+            // areaGroup
+            const groups = document.querySelectorAll(".zone-label");
+            const selectedGroups = [];
+            if (groups && groups.length > 0 && BUY_AREA_GROUPS.length > 0 && BUY_AREA_GROUPS[0] != "") {
+                for (let i = 0; i < BUY_AREA_GROUPS.length; i++) {
+                    for (let j = 0; j < groups.length; j++) {
+                        const group = groups[j];
+                        if (group.textContent.includes(BUY_AREA_GROUPS[i])) {
+                            // push data-id to selectedGroups
+                            const dataId = group.getAttribute("data-id");
+                            if (dataId) selectedGroups.push(dataId);
                         }
                     }
                 }
             }
-            return false;
+
+            // areaSeat
+            if (selectedGroups.length > 0) {
+                for (let i = 0; i < selectedGroups.length; i++) {
+                    const eleAreas = document.querySelectorAll(`#${selectedGroups[i]} li a`);
+                    console.log(selectedGroups[i], eleAreas);
+                    if (selectAreaSeat(eleAreas)) return true;
+                }
+                return false;
+            } else {
+                return selectAreaSeat(document.querySelectorAll(".zone-label li a"));
+            }
+
+            function selectAreaSeat(elements) {
+                if (elements && elements.length > 0) {
+                    elements = Array.from(elements).sort(() => Math.random() - 0.5);
+                    console.log("elements", elements);
+
+                    for (let i = 0; i < BUY_AREA_SEATS.length; i++) {
+                        if (isSubmit) {
+                            break;
+                        }
+                        const buyAreaKeys = BUY_AREA_SEATS[i].split(" ");
+                        for (let j = 0; j < elements.length; j++) {
+                            const a = elements[j];
+                            const text = a.textContent;
+                            if (
+                                text.includes("輪椅") ||
+                                text.includes("身障") ||
+                                text.includes("障礙") ||
+                                text.includes("Restricted") ||
+                                text.includes("遮蔽") ||
+                                text.includes("視線不完整")
+                            ) {
+                                continue;
+                            }
+                            const remainFont = a.querySelector("font");
+                            if (remainFont) {
+                                const remainCount = remainFont.textContent.replace("剩餘 ", "");
+                                if (remainCount < BUY_COUNT) {
+                                    continue;
+                                }
+                            }
+                            let matchCount = 0;
+                            buyAreaKeys.forEach((key) => {
+                                if (text.includes(key)) {
+                                    matchCount++;
+                                }
+                            });
+                            if (!isSubmit && matchCount > 0 && matchCount == buyAreaKeys.length) {
+                                isSubmit = true;
+                                // a.click();
+                                console.log("pick up", text);
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
         }
 
         function goOrder(gameList) {
             let gameRows = gameList.querySelectorAll("tr");
 
-            for (let i = 0; i < buyDateIndexes.length; i++) {
-                let index = buyDateIndexes[i] - 1;
+            for (let i = 0; i < BUY_DATE_INDEXS.length; i++) {
+                let index = BUY_DATE_INDEXS[i] - 1;
                 if (index >= gameRows.length) {
-                    // 預設最後一場
-                    index = gameRows.length - 1;
+                    index = -1; // 預設隨機
                 }
 
                 if (index < 0) {
@@ -450,9 +483,9 @@ if (triggerUrl.includes("activity/detail/")) {
 
             function countdown() {
                 // 判斷距離執行時間剩餘秒數，若大於 0 則進行秒數倒數，並即時將剩餘秒數印出，否則重新整理
-                console.log("countdown:", executeTime);
+                console.log("countdown:", EXECUTE_TIME);
                 const now = new Date();
-                const executeDate = new Date(executeTime);
+                const executeDate = new Date(EXECUTE_TIME);
                 let diff = executeDate - now;
                 if (diff > 0) {
                     let seconds = Math.floor(diff / 1000);
@@ -480,7 +513,7 @@ if (triggerUrl.includes("activity/detail/")) {
                     if (isLogin) {
                         divConsole.textContent = "🤖";
                         if (isToggle) {
-                            if (executeTime && executeTime.length > 0) {
+                            if (EXECUTE_TIME && EXECUTE_TIME.length > 0) {
                                 countdown();
                             } else {
                                 window.location.reload(true);
