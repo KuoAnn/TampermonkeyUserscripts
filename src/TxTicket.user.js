@@ -18,33 +18,33 @@ const PAY_TYPE = "A"; // 付款方式：A=ATM, C=信用卡
 const EXECUTE_TIME = "2024/10/10 23:31:30"; // 啟動時間：HH:mm:ss，"" OR 重整頁面=立即執行
 
 // 系統參數(勿動)
-let sys_isAutoMode = (localStorage.getItem("autoMode") || 0) == 1;
-let sys_countdownInterval = null;
-let sys_isSetConsole = false;
-let sys_session = "";
-let sys_isSelectArea = false;
-let sys_isSelect2Button = false;
-let sys_isClickBuyTicket = false;
-let sys_isOcr = false;
-let sys_isClickPayType = false;
-let sys_isSubmit = false;
-let sys_isListenOrder = false;
-let sys_isGetCaptcha = false;
+let _isAutoMode = (localStorage.getItem("autoMode") || 0) == 1;
+let _countdownInterval = null;
+let _isSetConsole = false;
+let _session = "";
+let _isSelectArea = false;
+let _isSelect2Button = false;
+let _isClickBuyTicket = false;
+let _isOcr = false;
+let _isClickPayType = false;
+let _isSubmit = false;
+let _isListenOrder = false;
+let _isGetCaptcha = false;
 
 // 取得當前網址
 const triggerUrl = window.location.href;
 if (triggerUrl.includes("activity/detail/")) {
-    sys_session = "d";
+    _session = "d";
 } else if (triggerUrl.includes("ticket/game/")) {
-    sys_session = "g";
+    _session = "g";
 } else if (triggerUrl.includes("ticket/verify/")) {
-    sys_session = "v";
+    _session = "v";
 } else if (triggerUrl.includes("ticket/area/")) {
-    sys_session = "a";
+    _session = "a";
 } else if (triggerUrl.includes("ticket/ticket/")) {
-    sys_session = "t";
+    _session = "t";
 } else if (triggerUrl.includes("ticket/checkout/")) {
-    sys_session = "c";
+    _session = "c";
 }
 
 (function () {
@@ -52,7 +52,7 @@ if (triggerUrl.includes("activity/detail/")) {
     const observer = new MutationObserver((mo) => {
         mo.forEach((mutation) => {
             if (mutation.type === "childList") {
-                if (sys_session != "d" && sys_session != "g") {
+                if (_session != "d" && _session != "g") {
                     observer.disconnect();
                 }
 
@@ -70,21 +70,21 @@ if (triggerUrl.includes("activity/detail/")) {
                     closeAlert.click();
                 }
 
-                switch (sys_session) {
+                switch (_session) {
                     case "d":
                     case "g":
                         // 活動頁
                         // 點選立即購票
                         const buyTicket = document.querySelector('a[href^="/activity/game/"]');
-                        if (buyTicket && !sys_isClickBuyTicket) {
-                            sys_isClickBuyTicket = true;
+                        if (buyTicket && !_isClickBuyTicket) {
+                            _isClickBuyTicket = true;
                             buyTicket.click();
                         }
 
-                        if (sys_isAutoMode) {
+                        if (_isAutoMode) {
                             const gameList = document.querySelector("#gameList table tbody");
-                            if (gameList && !sys_isSubmit && !sys_isListenOrder) {
-                                sys_isListenOrder = true;
+                            if (gameList && !_isSubmit && !_isListenOrder) {
+                                _isListenOrder = true;
                                 const listenInterval = setInterval(() => {
                                     const updatedGameList = document.querySelector("#gameList table tbody");
                                     if (updatedGameList) {
@@ -125,8 +125,8 @@ if (triggerUrl.includes("activity/detail/")) {
                         break;
                     case "a":
                         // 自動選位
-                        if (sys_isAutoMode && !sys_isSelectArea) {
-                            sys_isSelectArea = true;
+                        if (_isAutoMode && !_isSelectArea) {
+                            _isSelectArea = true;
                             const isOk = selectArea();
                             if (!isOk) {
                                 setTimeout(() => {
@@ -167,8 +167,8 @@ if (triggerUrl.includes("activity/detail/")) {
                         function handleCaptchaInput() {
                             const captchaInput = document.getElementById("TicketForm_verifyCode");
                             if (captchaInput) {
-                                if (sys_isAutoMode && !sys_isOcr) {
-                                    sys_isOcr = true;
+                                if (_isAutoMode && !_isOcr) {
+                                    _isOcr = true;
                                     setCaptcha();
                                 }
 
@@ -185,8 +185,8 @@ if (triggerUrl.includes("activity/detail/")) {
                         // 付款
                         function selectPaymentMethod(elementId) {
                             const paymentRadio = document.getElementById(elementId);
-                            if (!sys_isClickPayType && paymentRadio) {
-                                sys_isClickPayType = true;
+                            if (!_isClickPayType && paymentRadio) {
+                                _isClickPayType = true;
                                 paymentRadio.click();
                             }
                         }
@@ -208,8 +208,8 @@ if (triggerUrl.includes("activity/detail/")) {
 
         function select2Button() {
             const select = document.querySelector("#gameId");
-            if (select && !sys_isSelect2Button) {
-                sys_isSelect2Button = true;
+            if (select && !_isSelect2Button) {
+                _isSelect2Button = true;
                 const title = document.querySelector(".activityT.title");
                 if (title) {
                     title.style.display = "none";
@@ -279,15 +279,15 @@ if (triggerUrl.includes("activity/detail/")) {
                     const randomElements = Array.from(elements).sort(() => Math.random() - 0.5);
 
                     for (const seat of BUY_AREA_SEATS) {
-                        if (sys_isSubmit) break;
+                        if (_isSubmit) break;
 
                         const buyAreaKeys = seat.split(" ");
                         for (const element of randomElements) {
                             if (isExcluded(element)) continue;
 
                             const matchCount = buyAreaKeys.filter((key) => element.textContent.includes(key)).length;
-                            if (!sys_isSubmit && matchCount > 0 && matchCount === buyAreaKeys.length) {
-                                sys_isSubmit = true;
+                            if (!_isSubmit && matchCount > 0 && matchCount === buyAreaKeys.length) {
+                                _isSubmit = true;
                                 element.click();
                                 // console.log("pick", element.textContent);
                                 return true;
@@ -344,8 +344,8 @@ if (triggerUrl.includes("activity/detail/")) {
                 }
 
                 const gameButton = gameRows[index]?.querySelector("button");
-                if (gameButton && !sys_isSubmit) {
-                    sys_isSubmit = true;
+                if (gameButton && !_isSubmit) {
+                    _isSubmit = true;
                     gameButton.click();
                     return true;
                 }
@@ -390,13 +390,13 @@ if (triggerUrl.includes("activity/detail/")) {
                 data: JSON.stringify({ image_data: image_data }),
                 onload: function (r) {
                     console.log(url, r.responseText);
-                    sys_isOcr = false;
+                    _isOcr = false;
                     if (r.status == 200) {
                         const answer = JSON.parse(r.responseText).answer;
                         if (answer.length == 4) {
-                            if (!sys_isGetCaptcha) {
+                            if (!_isGetCaptcha) {
                                 console.log(url + " return " + answer);
-                                sys_isGetCaptcha = true;
+                                _isGetCaptcha = true;
                                 const verifyCodeInput = document.getElementById("TicketForm_verifyCode");
                                 if (verifyCodeInput) {
                                     verifyCodeInput.value = answer;
@@ -405,8 +405,8 @@ if (triggerUrl.includes("activity/detail/")) {
                             } else {
                                 console.log(url + " unuse " + answer);
                             }
-                        } else if (!sys_isGetCaptcha) {
-                            sys_isGetCaptcha = true;
+                        } else if (!_isGetCaptcha) {
+                            _isGetCaptcha = true;
                             console.log(url + " retry");
                             refreshCaptcha(url);
                         }
@@ -433,7 +433,7 @@ if (triggerUrl.includes("activity/detail/")) {
                         const image_data = get_ocr_image();
                         if (image_data) {
                             clearInterval(interval);
-                            sys_isGetCaptcha = false;
+                            _isGetCaptcha = false;
                             getCaptcha(url, image_data);
                         } else {
                             console.log("image_data is empty");
@@ -470,14 +470,14 @@ if (triggerUrl.includes("activity/detail/")) {
         }
 
         function SetConsole() {
-            if (sys_isSetConsole) {
+            if (_isSetConsole) {
                 return;
             }
-            sys_isSetConsole = true;
+            _isSetConsole = true;
             const isLogin = !!document.querySelector(".user-name");
 
             const divConsole = createConsoleElement();
-            setDivConsoleText(divConsole, sys_isAutoMode, isLogin);
+            setDivConsoleText(divConsole, _isAutoMode, isLogin);
 
             divConsole.addEventListener("click", () => {
                 let isAutoMode = (localStorage.getItem("autoMode") || 0) == 1;
@@ -509,10 +509,10 @@ if (triggerUrl.includes("activity/detail/")) {
                 let diff = executeDate - now;
                 if (diff > 0) {
                     let seconds = Math.floor(diff / 1000);
-                    sys_countdownInterval = setInterval(() => {
+                    _countdownInterval = setInterval(() => {
                         seconds--;
                         if (seconds <= 0) {
-                            clearInterval(sys_countdownInterval);
+                            clearInterval(_countdownInterval);
                             window.location.reload(true);
                         } else {
                             divConsole.textContent = `🤖 ${seconds} 秒`;
@@ -551,8 +551,8 @@ if (triggerUrl.includes("activity/detail/")) {
                 } else {
                     divConsole.style.backgroundColor = "red";
                     divConsole.textContent = !isLogin ? "💪 未登入" : "💪";
-                    if (isToggle && sys_countdownInterval != null) {
-                        clearInterval(sys_countdownInterval);
+                    if (isToggle && _countdownInterval != null) {
+                        clearInterval(_countdownInterval);
                     }
                 }
             }
@@ -570,8 +570,8 @@ if (triggerUrl.includes("activity/detail/")) {
 
 function autoSubmit() {
     const submit = document.querySelector("button[type=submit],#submitButton");
-    if (submit && !sys_isSubmit) {
-        sys_isSubmit = true;
+    if (submit && !_isSubmit) {
+        _isSubmit = true;
         submit.click();
     }
 }
