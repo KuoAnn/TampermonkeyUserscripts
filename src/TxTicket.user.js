@@ -2,7 +2,7 @@
 // @name         TxTicket
 // @namespace    http://tampermonkey.net/
 // @source       https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/TxTicket.user.js
-// @version      1.0.4
+// @version      1.0.5
 // @description  強化UI/勾選同意條款/銀行辨識/選取購票/點選立即購票/選擇付款方式/alt+↓=切換日期/Enter送出/關閉提醒/移除廣告/執行倒數
 // @author       You
 // @match        https://tixcraft.com/*
@@ -10,11 +10,11 @@
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
 // 個人參數
-const buyDateIndexes = [2, 3, -1]; // 場次優先順序：0=第一場 1=第二場... 負數=任一場
+const buyDateIndexes = [1, 2, -1]; // 場次優先順序：1=第一場 2=第二場... 負數=任一場
 const buyArea = ["VIP", ""]; // 座位優先順序，建議嚴謹>鬆散；以空白作為 AND 邏輯：空值=任一場
 const buyCount = 4; // 購買張數，若無則選擇最大值
 const payType = "A"; // 付款方式：A=ATM, C=信用卡
-const executeTime = "2024/10/5 23:31:30"; // 啟動時間：HH:mm:ss，空值=立即執行
+const executeTime = "2024/10/10 23:31:30"; // 啟動時間：HH:mm:ss，空值=立即執行
 
 // 系統參數(勿動)
 let isAutoMode = (localStorage.getItem("autoMode") || 0) == 1;
@@ -244,6 +244,16 @@ if (triggerUrl.includes("activity/detail/")) {
                     for (let j = 0; j < areas.length; j++) {
                         const a = areas[j];
                         const text = a.textContent;
+                        if (
+                            text.includes("輪椅") ||
+                            text.includes("身障") ||
+                            text.includes("障礙") ||
+                            text.includes("Restricted") ||
+                            text.includes("遮蔽") ||
+                            text.includes("視線不完整")
+                        ) {
+                            continue;
+                        }
                         const remainFont = a.querySelector("font");
                         if (remainFont) {
                             const remainCount = remainFont.textContent.replace("剩餘 ", "");
@@ -272,7 +282,7 @@ if (triggerUrl.includes("activity/detail/")) {
             let gameRows = gameList.querySelectorAll("tr");
 
             for (let i = 0; i < buyDateIndexes.length; i++) {
-                let index = buyDateIndexes[i];
+                let index = buyDateIndexes[i] - 1;
                 if (index >= gameRows.length) {
                     // 預設最後一場
                     index = gameRows.length - 1;
@@ -396,6 +406,7 @@ if (triggerUrl.includes("activity/detail/")) {
                 submit.style.fontSize = "24px";
                 submit.style.height = "100px";
                 submit.style.width = "100%";
+                submit.style.margin = "4px";
                 const reSelect = document.getElementById("reSelect");
                 if (reSelect) {
                     const parentDiv = reSelect.parentNode;
