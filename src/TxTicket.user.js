@@ -256,7 +256,7 @@ if (triggerUrl.includes("activity/detail/")) {
                 }
                 return false;
             } else {
-                return selectAreaSeat(document.querySelectorAll(".zone-label li a"));
+                return selectAreaSeat(document.querySelectorAll(".area-list li a"));
             }
 
             function getSelectedGroups(groups) {
@@ -289,6 +289,7 @@ if (triggerUrl.includes("activity/detail/")) {
                             if (!sys_isSubmit && matchCount > 0 && matchCount === buyAreaKeys.length) {
                                 sys_isSubmit = true;
                                 element.click();
+                                // console.log("pick", element.textContent);
                                 return true;
                             }
                         }
