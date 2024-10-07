@@ -7,6 +7,8 @@
 // @author       You
 // @match        https://tixcraft.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=tixcraft.com
+// @connect      maxbot.dropboxlike.com
+// @connect      asia-east1-futureminer.cloudfunctions.net
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
 // 個人參數

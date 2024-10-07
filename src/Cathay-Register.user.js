@@ -6,13 +6,28 @@
 // @description  try to take over the world!
 // @author       KuoAnn
 // @match        https://www.cathaybk.com.tw/promotion*
+// @connect      maxbot.dropboxlike.com
 // @grant        GM_xmlhttpRequest
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=www.cathaybk.com.tw
 // ==/UserScript==
 
 // 個人參數
-const USER_ID = "";
-const USER_BIRTH = "";
+const USER_ID_KEY = "userId";
+const USER_BIRTH_KEY = "userBirth";
+const USER_ID = getUserData(USER_ID_KEY, "身分證字號:");
+const USER_BIRTH = getUserData(USER_BIRTH_KEY, "生日 (YYYYMMDD):");
+
+function getUserData(key, promptMessage) {
+    let value = localStorage.getItem(key);
+    if (!value) {
+        value = prompt(promptMessage);
+        while (!value) {
+            value = prompt(promptMessage);
+        }
+        localStorage.setItem(key, value);
+    }
+    return value;
+}
 
 // 系統參數
 const CAPTCHA_API_URL = "http://maxbot.dropboxlike.com:16888/ocr";
@@ -34,12 +49,6 @@ let _isLoaded = false;
                 const captchaImage = document.querySelector(CAPTCHA_IMAGE_SELECTOR);
                 if (!_isLoaded && captchaImage) {
                     _isLoaded = true;
-                    if (captchaImage) {
-                        _captchaBase64 = getCaptchaImage(captchaImage);
-                        if (_captchaBase64) {
-                            setCaptchaAndSubmit(_captchaBase64, "#Captcha");
-                        }
-                    }
 
                     const idInput = document.querySelector(".input-element#ID");
                     if (idInput) {
@@ -54,6 +63,13 @@ let _isLoaded = false;
                     const checkAgree = document.querySelector(".checkbox#CheckAgreement");
                     if (checkAgree) {
                         checkAgree.checked = true;
+                    }
+
+                    if (captchaImage) {
+                        _captchaBase64 = getCaptchaImage(captchaImage);
+                        if (_captchaBase64) {
+                            setCaptchaAndSubmit(_captchaBase64, "#Captcha");
+                        }
                     }
                 }
 
