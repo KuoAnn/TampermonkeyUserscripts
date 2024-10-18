@@ -9,6 +9,9 @@
 // @connect      maxbot.dropboxlike.com
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
+// 個人參數
+const ACCOUNT = "";
+const PASSWORD = "";
 
 // 系統參數
 const CAPTCHA_API_URL = "http://maxbot.dropboxlike.com:16888/ocr";
@@ -27,6 +30,16 @@ let _isSubmit = false;
         mo.forEach((mutation) => {
             if (mutation.type === "childList") {
                 console.log("Mutated");
+
+                const accountInput = document.querySelector("#account");
+                if (accountInput) {
+                    accountInput.value = ACCOUNT;
+                }
+
+                const passwordInput = document.querySelector("#pass");
+                if (passwordInput) {
+                    passwordInput.value = PASSWORD;
+                }
 
                 const loginBtn = document.querySelector(".login-btn");
                 if (!_isLoaded && loginBtn) {
