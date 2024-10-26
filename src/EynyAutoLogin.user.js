@@ -4,7 +4,7 @@
 // @version      1.0.0
 // @description  Automatically fill in login details and submit for Eyny forum
 // @author       You
-// @match        https://w123ww.eyny.com/member.php?mod=logging*
+// @match        https://*.eyny.com/member.php?mod=logging*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=eyny.com
 // @grant        none
 // ==/UserScript==
