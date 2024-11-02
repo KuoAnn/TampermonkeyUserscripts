@@ -12,12 +12,12 @@
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
 // 個人參數
-const BUY_DATE_INDEXS = [1, 2, -1]; // 場次優先順序：1=第一場 2=第二場... 負數=隨機 (搶票瞬間因無法確認售完，基本上就是選第一順位)
-const BUY_AREA_GROUPS = ["3600", "3400", "3000"]; // 座位群組(通常是價位)：""=全部 (座位會被鎖定在此群內；安全機制：若查無群組則預設全選)
+const BUY_DATE_INDEXS = [-1]; // 場次優先順序：1=第一場 2=第二場... 負數=隨機 (搶票瞬間因無法確認售完，基本上就是選第一順位)
+const BUY_AREA_GROUPS = ["", "", ""]; // 座位群組(通常是價位)：""=全部 (座位會被鎖定在此群內；安全機制：若查無群組則預設全選)
 const BUY_AREA_SEATS = [""]; // 座位優先順序；""=隨機 空白分隔=AND邏輯 (需注意是否和座位群組互斥)
-const BUY_COUNT = 4; // 購買張數，若無則選擇最大值
+const BUY_COUNT = 2; // 購買張數，若無則選擇最大值
 const PAY_TYPE = "A"; // 付款方式：A=ATM, C=信用卡
-const EXECUTE_TIME = "2024/10/10 23:31:30"; // 啟動時間：HH:mm:ss，"" OR 重整頁面=立即執行
+const EXECUTE_TIME = "2024/10/10 23:31:30"; // 啟動時間：yyyy/MM/dd HH:mm:ss，"" OR 重整頁面=立即執行
 
 // 系統參數(勿動)
 let _isAutoMode = (localStorage.getItem("autoMode") || 0) == 1;
@@ -37,7 +37,7 @@ let _isGetCaptcha = false;
 const triggerUrl = window.location.href;
 if (triggerUrl.includes("activity/detail/")) {
     _session = "d";
-} else if (triggerUrl.includes("ticket/game/")) {
+} else if (triggerUrl.includes("activity/game/")) {
     _session = "g";
 } else if (triggerUrl.includes("ticket/verify/")) {
     _session = "v";
@@ -88,6 +88,7 @@ if (triggerUrl.includes("activity/detail/")) {
                             if (gameList && !_isSubmit && !_isListenOrder) {
                                 _isListenOrder = true;
                                 const listenInterval = setInterval(() => {
+                                    console.log("interval");
                                     const updatedGameList = document.querySelector("#gameList table tbody");
                                     if (updatedGameList) {
                                         const isOrderSuccessful = goOrder(updatedGameList);
@@ -420,7 +421,6 @@ if (triggerUrl.includes("activity/detail/")) {
             const imgCaptcha = document.getElementById("TicketForm_verifyCode-image");
             if (imgCaptcha) {
                 imgCaptcha.click();
-                // 輪詢 TicketForm_verifyCode-image 查看 src 屬性是否有變化
                 const src = imgCaptcha.src;
                 console.log("src", src);
                 const interval = setInterval(() => {
@@ -449,7 +449,6 @@ if (triggerUrl.includes("activity/detail/")) {
                     margin: "4px",
                 });
 
-                // 將 submit 按鈕移到最上方
                 const submitParent = submit.parentNode;
                 if (submitParent) {
                     submitParent.prepend(submit);
@@ -520,7 +519,7 @@ if (triggerUrl.includes("activity/detail/")) {
             }
 
             function setDivConsoleText(divConsole, isAutoMode, isLogin, isToggle = false) {
-                console.log(isAutoMode, isToggle);
+                console.log("isAutoMode=" + isAutoMode, "isToggle=" + isToggle);
                 if (isToggle) {
                     isAutoMode = !isAutoMode;
                 }
