@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Cathay Auto Register
+// @name         Cathay card activity register
 // @namespace    https://www.cathaybk.com.tw/promotion/CreditCard/Event
 // @source       https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/Cathay-Register.user.js
-// @version      1.0.2
+// @version      1.0.3
 // @description  try to take over the world!
 // @author       KuoAnn
 // @match        https://www.cathaybk.com.tw/promotion*
@@ -81,7 +81,8 @@ let _isLoaded = false;
                         var cid = btn.getAttribute("data-campaign-id");
                         if (cid) {
                             try {
-                                // attack(cid);
+                                btn.click();
+                                
                                 var title = btn.closest(".tr").querySelector(".td.wtitle a").textContent.replace("\r\n", "").trim();
                                 alert("註冊 " + title);
                             } catch (error) {
