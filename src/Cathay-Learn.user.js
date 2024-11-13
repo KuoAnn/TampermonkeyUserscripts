@@ -2,7 +2,7 @@
 // @name         國泰學習網
 // @namespace    http://tampermonkey.net/
 // @source       https://github.com/KuoAnn/TampermonkeyUserscripts/raw/main/src/Cathay-Learn.user.js
-// @version      1.0.2
+// @version      1.0.3
 // @description  try to take over the world!
 // @author       KuoAnn
 // @match        https://cathay.elearn.com.tw/cltcms/play-index-home.do
@@ -10,44 +10,77 @@
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=www.cathaybk.com.tw
 // ==/UserScript==
 (function () {
-    "use strict";
-    var body = document.querySelector("body");
-    var title = document.createElement("h2");
-    title.style.textAlign = "center";
-    title.style.position = "fixed";
-    title.style.width = "100%";
-    title.style.top = "24px";
-    title.style.color = "#eee";
-    title.style.backgroundColor = "red";
-    body.prepend(title);
+    ("use strict");
+    let countdownInterval;
+    const body = document.querySelector("body");
+    const countdown = document.createElement("div");
+    setStyles(countdown, {
+        textAlign: "center",
+        position: "fixed",
+        width: "100%",
+        top: "0",
+        color: "#eee",
+        backgroundColor: "red",
+    });
+    body.prepend(countdown);
+    
+    const countdownText = document.createElement("span");
+    countdownText.innerText = "";
+    countdown.appendChild(countdownText);
+    
+    const cancelBtn = document.createElement("a");
+    setStyles(cancelBtn, {
+        color: "#eee",
+        backgroundColor: "red",
+        cursor: "pointer",
+        textDecoration: "underline",
+    });
+    cancelBtn.innerText = "取消";
+    cancelBtn.onclick = function () {
+        clearInterval(onloadInterval);
+        if (countdownInterval) clearInterval(countdownInterval);
+        countdown.remove();
+    };
+    countdown.appendChild(cancelBtn);
 
-    var countdownSec = 0; //Sec
-    var waitTime = 15; //Sec
-    var onloadInt = setInterval(function () {
+    var countdownSec = 0;
+    var totalSec = 0;
+    var waitTime = 15;
+    const onloadInterval = setInterval(() => {
         try {
-            let duration = document
-                .querySelector("iframe#content")
-                .contentWindow.document.querySelector("iframe#playContent")
-                .contentWindow.document.querySelector("iframe#Content")
-                .contentWindow.document.querySelector("video").duration;
+            const contentIframe = document.querySelector("iframe#content");
+            const playContentIframe = contentIframe.contentWindow.document.querySelector("iframe#playContent");
+            const contentVideoIframe = playContentIframe.contentWindow.document.querySelector("iframe#Content");
+            const video = contentVideoIframe.contentWindow.document.querySelector("video");
+
+            const duration = video.duration;
             countdownSec = Math.round(duration);
-        } catch (error) {}
+            totalSec = countdownSec;
+        } catch (error) {
+            console.log("Not ready yet: " + error);
+        }
+
         if (countdownSec > 0) {
             AutoLearn();
         } else if (waitTime <= 0) {
-            //default: 5 min
+            // default: 5 min
             countdownSec = 5 * 60;
+            totalSec = countdownSec;
             AutoLearn();
         } else {
             waitTime--;
         }
     }, 1000);
 
+    function setStyles(element, styles) {
+        for (const property in styles) {
+            element.style[property] = styles[property];
+        }
+    }
+
     function AutoLearn() {
-        clearInterval(onloadInt);
-        // 調整視窗為 400*400
+        clearInterval(onloadInterval);
         window.resizeTo(400, 400);
-        // 獲取螢幕寬高
         const screenWidth = screen.width;
         const screenHeight = screen.height;
         const windowWidth = window.outerWidth;
@@ -62,11 +95,11 @@
         endDate.setSeconds(endDate.getSeconds() + countdownSec);
         console.log("Countdown to: " + endDate);
 
-        setInterval(function () {
+        countdownInterval = setInterval(function () {
             // re-count countdownSec from endDate
             countdownSec = Math.round((endDate - new Date()) / 1000);
             if (countdownSec > 0) {
-                title.innerText = "Auto Learning..." + --countdownSec;
+                countdownText.innerText = --countdownSec + "/" + totalSec;
             } else {
                 var x = document.querySelector("iframe#banner").contentWindow.document.querySelectorAll("button");
                 x[x.length - 1].click();
