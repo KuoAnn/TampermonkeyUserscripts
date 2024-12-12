@@ -10,11 +10,14 @@
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=www.cathaybk.com.tw
 // ==/UserScript==
 (function () {
+    const TIMEOUT_SECOND = 300;
+    const WAIT_TIME_SECOND = 15;
+
     ("use strict");
     let countdownInterval;
     const body = document.querySelector("body");
-    const countdown = document.createElement("div");
-    setStyles(countdown, {
+    const countdownRow = document.createElement("div");
+    setStyles(countdownRow, {
         textAlign: "center",
         position: "fixed",
         width: "100%",
@@ -22,12 +25,13 @@
         color: "#eee",
         backgroundColor: "red",
     });
-    body.prepend(countdown);
-    
+    body.prepend(countdownRow);
+
     const countdownText = document.createElement("span");
     countdownText.innerText = "";
-    countdown.appendChild(countdownText);
-    
+    countdownRow.appendChild(countdownText);
+
+    // 取消按鈕
     const cancelBtn = document.createElement("a");
     setStyles(cancelBtn, {
         color: "#eee",
@@ -39,36 +43,43 @@
     cancelBtn.onclick = function () {
         clearInterval(onloadInterval);
         if (countdownInterval) clearInterval(countdownInterval);
-        countdown.remove();
+        countdownRow.remove();
     };
-    countdown.appendChild(cancelBtn);
+    countdownRow.appendChild(cancelBtn);
 
     var countdownSec = 0;
     var totalSec = 0;
-    var waitTime = 15;
+    var waitTime = WAIT_TIME_SECOND;
     const onloadInterval = setInterval(() => {
         try {
             const contentIframe = document.querySelector("iframe#content");
-            const playContentIframe = contentIframe.contentWindow.document.querySelector("iframe#playContent");
-            const contentVideoIframe = playContentIframe.contentWindow.document.querySelector("iframe#Content");
-            const video = contentVideoIframe.contentWindow.document.querySelector("video");
+            if (contentIframe && contentIframe.contentWindow) {
+                const playContentIframe = contentIframe.contentWindow.document.querySelector("iframe#playContent");
+                if (playContentIframe && playContentIframe.contentWindow) {
+                    const contentVideoIframe = playContentIframe.contentWindow.document.querySelector("iframe#Content");
+                    if (contentVideoIframe && contentVideoIframe.contentWindow) {
+                        const video = contentVideoIframe.contentWindow.document.querySelector("video");
 
-            const duration = video.duration;
-            countdownSec = Math.round(duration);
-            totalSec = countdownSec;
+                        const duration = video.duration;
+                        countdownSec = Math.round(duration);
+                        totalSec = countdownSec;
+                    }
+                }
+            }
         } catch (error) {
-            console.log("Not ready yet: " + error);
+            console.log("onLoadInterval error: " + error);
         }
 
         if (countdownSec > 0) {
             AutoLearn();
         } else if (waitTime <= 0) {
-            // default: 5 min
-            countdownSec = 5 * 60;
+            // 超過等待時間，使用預設時間
+            countdownSec = TIMEOUT_SECOND;
             totalSec = countdownSec;
             AutoLearn();
         } else {
             waitTime--;
+            console.log("Wait video loding for " + waitTime);
         }
     }, 1000);
 
@@ -80,17 +91,6 @@
 
     function AutoLearn() {
         clearInterval(onloadInterval);
-        window.resizeTo(400, 400);
-        const screenWidth = screen.width;
-        const screenHeight = screen.height;
-        const windowWidth = window.outerWidth;
-        const windowHeight = window.outerHeight;
-        // 計算右下角座標
-        const rightX = screenWidth - windowWidth;
-        const bottomY = screenHeight - windowHeight;
-        // 移動視窗到右下角
-        window.moveTo(rightX, bottomY);
-
         var endDate = new Date();
         endDate.setSeconds(endDate.getSeconds() + countdownSec);
         console.log("Countdown to: " + endDate);
@@ -101,8 +101,11 @@
             if (countdownSec > 0) {
                 countdownText.innerText = --countdownSec + "/" + totalSec;
             } else {
-                var x = document.querySelector("iframe#banner").contentWindow.document.querySelectorAll("button");
-                x[x.length - 1].click();
+                const iframeBanner = document.querySelector("iframe#banner");
+                if (iframeBanner) {
+                    var x = iframeBanner.contentWindow.document.querySelectorAll("button");
+                    x[x.length - 1].click();
+                }
             }
         }, 1000);
     }
