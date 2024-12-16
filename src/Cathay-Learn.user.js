@@ -91,6 +91,17 @@
 
     function AutoLearn() {
         clearInterval(onloadInterval);
+        window.resizeTo(400, 400);
+        const screenWidth = screen.width;
+        const screenHeight = screen.height;
+        const windowWidth = window.outerWidth;
+        const windowHeight = window.outerHeight;
+        // 計算右下角座標
+        const rightX = screenWidth - windowWidth;
+        const bottomY = screenHeight - windowHeight;
+        // 移動視窗到右下角
+        window.moveTo(rightX, bottomY);
+        
         var endDate = new Date();
         endDate.setSeconds(endDate.getSeconds() + countdownSec);
         console.log("Countdown to: " + endDate);
